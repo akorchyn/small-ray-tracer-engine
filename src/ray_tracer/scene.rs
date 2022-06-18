@@ -1,9 +1,9 @@
-use crate::basic_geometry::Intersect;
-use crate::ray_tracer::light::Light;
+use super::light::DirectedLight;
+use super::RayTracable;
 
 pub(crate) struct Scene {
-    objects: Vec<Box<dyn Intersect>>,
-    lights: Vec<Light>,
+    objects: Vec<Box<dyn RayTracable>>,
+    lights: Vec<DirectedLight>,
 }
 
 impl Scene {
@@ -14,19 +14,19 @@ impl Scene {
         }
     }
 
-    pub(crate) fn add_object(&mut self, object: Box<dyn Intersect>) {
+    pub(crate) fn add_object(&mut self, object: Box<dyn RayTracable>) {
         self.objects.push(object);
     }
 
-    pub(crate) fn add_light(&mut self, light: Light) {
+    pub(crate) fn add_light(&mut self, light: DirectedLight) {
         self.lights.push(light);
     }
 
-    pub(crate) fn objects(&self) -> &Vec<Box<dyn Intersect>> {
+    pub(crate) fn objects(&self) -> &Vec<Box<dyn RayTracable>> {
         &self.objects
     }
 
-    pub(crate) fn lights(&self) -> &Vec<Light> {
+    pub(crate) fn lights(&self) -> &Vec<DirectedLight> {
         &self.lights
     }
 }

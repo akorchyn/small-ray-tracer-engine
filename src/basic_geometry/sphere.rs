@@ -1,9 +1,11 @@
+use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
 use crate::basic_geometry::ray::Ray;
+use crate::basic_geometry::vector::Vector;
 
-use super::Intersect;
+use super::{Intersect, NormalAtPoint};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct Sphere {
     center: Point,
     radius: f64,
@@ -17,9 +19,9 @@ impl Sphere {
 
 impl Intersect for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<f64> {
-        let k = ray.origin.to_vector() - self.center.to_vector();
+        let k = Vector::from(ray.origin) - Vector::from(self.center);
         let a = ray.direction.dot(ray.direction);
-        let b = 2. * k.dot(ray.direction.to_vector());
+        let b = 2. * k.dot(Vector::from(ray.direction));
         let c = k.dot(k) - self.radius * self.radius;
         let discriminant = b * b - 4. * a * c;
         if discriminant < 0. {
@@ -38,6 +40,12 @@ impl Intersect for Sphere {
         } else {
             None
         }
+    }
+}
+
+impl NormalAtPoint for Sphere {
+    fn normal_at_point(&self, point: &Point) -> Normal {
+        (Vector::from(*point) - Vector::from(self.center)).normalize()
     }
 }
 

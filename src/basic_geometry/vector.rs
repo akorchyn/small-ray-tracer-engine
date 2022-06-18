@@ -1,6 +1,7 @@
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use crate::basic_geometry::normal::Normal;
+use crate::basic_geometry::point::Point;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Vector {
@@ -75,6 +76,30 @@ impl Neg for Vector {
     }
 }
 
+impl Div<f64> for Vector {
+    type Output = Vector;
+
+    fn div(self, other: f64) -> Vector {
+        Vector {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other,
+        }
+    }
+}
+
+impl From<Point> for Vector {
+    fn from(point: Point) -> Vector {
+        Vector::new(point.x, point.y, point.z)
+    }
+}
+
+impl From<Normal> for Vector {
+    fn from(normal: Normal) -> Vector {
+        Vector::new(normal.x, normal.y, normal.z)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::basic_geometry::vector::Vector;
@@ -136,5 +161,14 @@ mod tests {
         assert_eq!(vector2.x, -1.);
         assert_eq!(vector2.y, -2.);
         assert_eq!(vector2.z, -3.);
+    }
+
+    #[test]
+    fn vector_div_by_value() {
+        let vector = Vector::new(1., 2., 3.);
+        let vector2 = vector / 2.;
+        assert_eq!(vector2.x, 0.5);
+        assert_eq!(vector2.y, 1.);
+        assert_eq!(vector2.z, 1.5);
     }
 }

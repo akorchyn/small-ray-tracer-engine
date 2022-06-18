@@ -13,10 +13,6 @@ impl Point {
     pub(crate) fn new(x: f64, y: f64, z: f64) -> Point {
         Point { x, y, z }
     }
-
-    pub(crate) fn to_vector(&self) -> Vector {
-        Vector::new(self.x, self.y, self.z)
-    }
 }
 
 impl Add<Vector> for Point {
@@ -24,5 +20,11 @@ impl Add<Vector> for Point {
 
     fn add(self, other: Vector) -> Point {
         Point::new(self.x + other.x, self.y + other.y, self.z + other.z)
+    }
+}
+
+impl From<Vector> for Point {
+    fn from(vector: Vector) -> Point {
+        Point::new(vector.x, vector.y, vector.z)
     }
 }

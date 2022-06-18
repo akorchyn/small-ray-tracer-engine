@@ -19,10 +19,6 @@ impl Normal {
         Normal { x, y, z }
     }
 
-    pub(crate) fn to_vector(&self) -> Vector {
-        Vector::new(self.x, self.y, self.z)
-    }
-
     pub(crate) fn dot(&self, other: Normal) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
@@ -43,6 +39,7 @@ impl Mul<f64> for Normal {
 #[cfg(test)]
 mod tests {
     use crate::basic_geometry::normal::Normal;
+    use crate::basic_geometry::vector::Vector;
 
     #[test]
     fn test_new() {
@@ -62,7 +59,7 @@ mod tests {
     #[test]
     fn test_to_vector() {
         let normal = Normal::new(0.5, 0.5, 0.5);
-        let vector = normal.to_vector();
+        let vector: Vector = normal.into();
         assert_eq!(vector.x, 0.5);
         assert_eq!(vector.y, 0.5);
         assert_eq!(vector.z, 0.5);
