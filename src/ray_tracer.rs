@@ -37,6 +37,7 @@ impl RayTracer {
         let mut buff = vec![-1.0; self.width * self.height];
         for y in 0..self.height {
             for x in 0..self.width {
+                println!("Ray-tracing: {}/{} {}/{}", y, self.height, x, self.width);
                 let ray = self
                     .camera
                     .ray_for_pixel(x, self.height - y, self.width, self.height);

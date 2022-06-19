@@ -1,3 +1,7 @@
+use std::path::PathBuf;
+
+use crate::io::Input;
+
 use super::light::DirectedLight;
 use super::RayTracable;
 
@@ -28,5 +32,10 @@ impl Scene {
 
     pub(crate) fn lights(&self) -> &Vec<DirectedLight> {
         &self.lights
+    }
+
+    pub(crate) fn from_obj_file(path: PathBuf) -> Result<Scene, std::io::Error> {
+        let loader = crate::io::obj_file::ObjectFile::new(path);
+        loader.load()
     }
 }
