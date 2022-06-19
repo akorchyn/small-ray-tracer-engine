@@ -1,5 +1,8 @@
 mod basic_geometry;
+mod io;
 mod ray_tracer;
+
+use std::path::PathBuf;
 
 use basic_geometry::alighned_box::AlighnedBox;
 use basic_geometry::normal::Normal;
@@ -19,6 +22,8 @@ fn main() {
     scene.add_light(DirectedLight::new(Normal::new(-0.4, 0.0, 0.0)));
     let viewframe = ViewFrame::new(Point::new(-40.0, 35.0, 50.0), 40.0, 40.0);
     let camera = Camera::new(Point::new(-40.0, 35.0, 80.0), viewframe);
-    let ray_tracer = RayTracer::new(scene, camera, 40, 40);
-    ray_tracer.render_into_console();
+    let ray_tracer = RayTracer::new(scene, camera, 500, 500);
+    ray_tracer
+        .render(io::ppm_image::PPMImage::new(PathBuf::from("./image.ppm")))
+        .unwrap();
 }
