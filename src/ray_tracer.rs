@@ -60,7 +60,8 @@ impl RayTracer {
             .lights()
             .iter()
             .map(|light| light.intensity_at_normal(normal))
-            .sum()
+            .sum::<f64>()
+            .min(1.0)
     }
 
     fn trace(&self, ray: &Ray) -> Option<(usize, f64)> {
