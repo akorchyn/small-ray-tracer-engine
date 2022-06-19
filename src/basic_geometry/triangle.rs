@@ -65,7 +65,7 @@ impl Intersect for Triangle {
         let inv_d = 1.0 / d;
         let ao = Vector::from(ray.origin) - self.a;
         let u_coordinate = ao.dot(normal) * inv_d;
-        if u_coordinate < 0.0 || u_coordinate > 1.0 {
+        if !(0.0..=1.0).contains(&u_coordinate) {
             return None;
         }
 

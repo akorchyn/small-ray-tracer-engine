@@ -52,16 +52,16 @@ impl Input for ObjectFile {
                     }
                     let mut array = [(Point::new(0.0, 0.0, 0.0), Option::<Normal>::None); 3];
 
-                    for i in 0..3 {
+                    for item in &mut array {
                         let point_line = iterator.next().unwrap();
-                        if point_line.find("/").is_none() {
+                        if !point_line.contains('/') {
                             let point_index = point_line.parse::<usize>().unwrap();
-                            array[i].0 = points[point_index - 1];
+                            item.0 = points[point_index - 1];
                         } else {
-                            let (p1, n1) = process_point(iterator.next().unwrap());
-                            array[i].0 = points[p1 - 1];
+                            let (p1, n1) = process_point(point_line);
+                            item.0 = points[p1 - 1];
                             if let Some(n2) = n1 {
-                                array[i].1 = Some(normals[n2 - 1]);
+                                item.1 = Some(normals[n2 - 1]);
                             }
                         }
                     }
@@ -89,7 +89,7 @@ impl Input for ObjectFile {
         fn process_point(line: &str) -> (usize, Option<usize>) {
             let mut iter = line.split('/');
             (
-                iter.nth(0).unwrap().parse::<usize>().unwrap(),
+                iter.next().unwrap().parse::<usize>().unwrap(),
                 iter.nth(1).map(|i| i.parse::<usize>().unwrap()),
             )
         }

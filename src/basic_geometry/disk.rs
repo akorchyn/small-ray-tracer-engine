@@ -13,6 +13,7 @@ pub(crate) struct Disk {
 }
 
 impl Disk {
+    #[allow(dead_code)]
     pub(crate) fn new(center: Point, radius: f64, normal: Normal) -> Disk {
         Disk {
             center,

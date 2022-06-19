@@ -3,7 +3,6 @@ use crate::basic_geometry::Normal;
 use crate::basic_geometry::Point;
 use crate::basic_geometry::Ray;
 
-use super::plane::Plane;
 use super::Intersect;
 use super::NormalAtPoint;
 
@@ -13,6 +12,7 @@ pub(crate) struct AlighnedBox {
     max: Point,
 }
 
+#[allow(dead_code)]
 impl AlighnedBox {
     pub(crate) fn new(min: Point, max: Point) -> AlighnedBox {
         AlighnedBox { min, max }

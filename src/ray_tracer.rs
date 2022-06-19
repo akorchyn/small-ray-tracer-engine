@@ -68,11 +68,7 @@ impl RayTracer {
             .objects()
             .iter()
             .enumerate()
-            .flat_map(|(i, object)| {
-                object
-                    .intersect(&ray)
-                    .and_then(|distance| Some((i, distance)))
-            })
+            .flat_map(|(i, object)| object.intersect(ray).map(|distance| (i, distance)))
             .min_by(|(_, a), (_, b)| a.partial_cmp(b).expect("Expected non NAN distance"))
     }
 }

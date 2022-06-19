@@ -18,9 +18,9 @@ impl Output for Console {
                     l if l > 0.8 => b'#',
                     _ => b' ',
                 };
-                stream.write(&[char])?;
+                stream.write_all(&[char])?;
             }
-            stream.write(b"\n")?;
+            stream.write_all(b"\n")?;
         }
         stream.flush()?;
         Ok(())

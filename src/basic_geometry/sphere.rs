@@ -12,6 +12,7 @@ pub(crate) struct Sphere {
 }
 
 impl Sphere {
+    #[allow(dead_code)]
     pub(crate) fn new(center: Point, radius: f64) -> Sphere {
         Sphere { center, radius }
     }
