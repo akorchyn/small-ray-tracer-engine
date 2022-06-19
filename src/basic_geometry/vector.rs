@@ -23,6 +23,14 @@ impl Vector {
         self.dot(*self).sqrt()
     }
 
+    pub(crate) fn cross(&self, other: Vector) -> Vector {
+        Vector {
+            x: self.y * other.z - self.z * other.y,
+            y: self.z * other.x - self.x * other.z,
+            z: self.x * other.y - self.y * other.x,
+        }
+    }
+
     pub(crate) fn normalize(&self) -> Normal {
         let length = self.length();
         if length == 0.0 {
@@ -170,5 +178,25 @@ mod tests {
         assert_eq!(vector2.x, 0.5);
         assert_eq!(vector2.y, 1.);
         assert_eq!(vector2.z, 1.5);
+    }
+
+    #[test]
+    fn cross_product_test() {
+        let vector1 = Vector::new(3.0, -5.0, 4.0);
+        let vector2 = Vector::new(2.0, 6.0, 5.0);
+        let vector3 = vector1.cross(vector2);
+        assert_eq!(vector3.x, -49.0);
+        assert_eq!(vector3.y, -7.0);
+        assert_eq!(vector3.z, 28.0);
+    }
+
+    #[test]
+    fn cross_product_2() {
+        let vector1 = Vector::new(3.0, 5.0, 4.0);
+        let vector2 = Vector::new(2.0, 7.0, 5.0);
+        let vector3 = vector1.cross(vector2);
+        assert_eq!(vector3.x, -3.0);
+        assert_eq!(vector3.y, -7.0);
+        assert_eq!(vector3.z, 11.0);
     }
 }

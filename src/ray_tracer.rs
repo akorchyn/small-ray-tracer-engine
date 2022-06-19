@@ -34,7 +34,7 @@ impl RayTracer {
     }
 
     pub(crate) fn render(&self, output: impl Output) -> Result<(), std::io::Error> {
-        let mut buff = vec![0.0; self.width * self.height];
+        let mut buff = vec![-1.0; self.width * self.height];
         for y in 0..self.height {
             for x in 0..self.width {
                 let ray = self

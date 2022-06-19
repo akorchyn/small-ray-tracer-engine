@@ -5,6 +5,7 @@ pub(crate) mod plane;
 pub(crate) mod point;
 pub(crate) mod ray;
 pub(crate) mod sphere;
+pub(crate) mod triangle;
 pub(crate) mod vector;
 
 use normal::Normal;
