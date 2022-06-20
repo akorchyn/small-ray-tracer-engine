@@ -7,6 +7,7 @@ use camera::Camera;
 use scene::Scene;
 
 use crate::basic_geometry::normal::Normal;
+use crate::basic_geometry::point::Point;
 use crate::basic_geometry::ray::Ray;
 use crate::basic_geometry::Intersect;
 use crate::basic_geometry::NormalAtPoint;
@@ -47,7 +48,7 @@ impl RayTracer {
                     let object = self.scene.objects().get(index).unwrap();
                     let point = ray.at(distance);
                     let normal = object.normal_at_point(&point);
-                    let intensity = self.light_value_at_normal(&normal);
+                    let intensity = self.light_value(normal, point, index);
                     buff[y * self.width + x] = intensity;
                 }
             }
@@ -55,11 +56,32 @@ impl RayTracer {
         output.dump(&buff, self.width, self.height)
     }
 
-    fn light_value_at_normal(&self, normal: &Normal) -> f64 {
+    fn is_any_object_blocking(&self, ray: &Ray, object_id: usize) -> bool {
+        self.scene.objects().iter().enumerate().any(|(id, object)| {
+            if id == object_id {
+                return false;
+            }
+            if let Some(distance) = object.intersect(ray) {
+                distance > 0.
+            } else {
+                false
+            }
+        })
+    }
+
+    fn light_value(&self, normal: Normal, intersection_point: Point, object_id: usize) -> f64 {
         self.scene
             .lights()
             .iter()
-            .map(|light| light.intensity_at_normal(normal))
+            .map(|light| {
+                let light_dir = (light.position - intersection_point).normalize();
+                let ray = Ray::new(intersection_point, light_dir);
+                if self.is_any_object_blocking(&ray, object_id) {
+                    (light_dir.dot(normal) * 0.5).max(0.0)
+                } else {
+                    light_dir.dot(normal).max(0.0)
+                }
+            })
             .sum::<f64>()
             .min(1.0)
     }

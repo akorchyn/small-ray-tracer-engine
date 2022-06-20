@@ -2,12 +2,12 @@ use std::path::PathBuf;
 
 use crate::io::Input;
 
-use super::light::DirectedLight;
+use super::light::Light;
 use super::RayTracable;
 
 pub(crate) struct Scene {
     objects: Vec<Box<dyn RayTracable>>,
-    lights: Vec<DirectedLight>,
+    lights: Vec<Light>,
 }
 
 impl Scene {
@@ -22,7 +22,7 @@ impl Scene {
         self.objects.push(object);
     }
 
-    pub(crate) fn add_light(&mut self, light: DirectedLight) {
+    pub(crate) fn add_light(&mut self, light: Light) {
         self.lights.push(light);
     }
 
@@ -30,7 +30,7 @@ impl Scene {
         &self.objects
     }
 
-    pub(crate) fn lights(&self) -> &Vec<DirectedLight> {
+    pub(crate) fn lights(&self) -> &Vec<Light> {
         &self.lights
     }
 

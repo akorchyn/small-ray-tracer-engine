@@ -36,7 +36,7 @@ impl Intersect for Plane {
 
         let k = Vector::from(self.center) - Vector::from(ray.origin);
         let t = k.dot(normal) / dn;
-        if t >= 0. {
+        if t > 0. {
             Some(t)
         } else {
             None

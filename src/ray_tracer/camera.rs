@@ -29,7 +29,7 @@ impl Camera {
         let point = self
             .view_frame
             .point_on_pixel(x, y, image_width, image_height);
-        let direction = (Vector::from(point) - Vector::from(self.position)).normalize();
+        let direction = (point - self.position).normalize();
         Ray::new(self.position, direction)
     }
 }

@@ -5,10 +5,10 @@ mod ray_tracer;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 
-use basic_geometry::normal::Normal;
 use basic_geometry::point::Point;
+use basic_geometry::sphere::Sphere;
 use ray_tracer::camera::Camera;
-use ray_tracer::light::DirectedLight;
+use ray_tracer::light::Light;
 use ray_tracer::scene::Scene;
 use ray_tracer::viewframe::ViewFrame;
 use ray_tracer::RayTracer;
@@ -63,9 +63,10 @@ The output file is a image fiile in the PPM file format.";
 fn main() {
     let (source, output) = parse_args();
     let mut scene = Scene::from_obj_file(source).unwrap();
-    scene.add_light(DirectedLight::new(Normal::new(0.0, 0.0, 1.0)));
-    let viewframe = ViewFrame::new(Point::new(0.0, 0.0, 100.0), 100.0, 100.0);
-    let camera = Camera::new(Point::new(0.0, 0.0, 150.0), viewframe);
+    scene.add_light(Light::new(Point::new(0.0, 5.0, 10.0)));
+    scene.add_object(Box::new(Sphere::new(Point::new(0.0, 3.0, 4.0), 0.25)));
+    let viewframe = ViewFrame::new(Point::new(0.0, 2.0, 5.0), 3.0, 3.0);
+    let camera = Camera::new(Point::new(0.0, 2.0, 7.0), viewframe);
     let ray_tracer = RayTracer::new(scene, camera, 500, 500);
     ray_tracer
         .render(io::ppm_image::PPMImage::new(output))

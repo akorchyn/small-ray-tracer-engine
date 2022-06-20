@@ -32,11 +32,11 @@ impl Intersect for Sphere {
         let t1 = (-b - square_descriminant) / (2. * a);
         let t2 = (-b + square_descriminant) / (2. * a);
 
-        if t1 >= 0. && t2 >= 0. {
+        if t1 > 0. && t2 > 0. {
             Some(t1.min(t2))
-        } else if t1 >= 0. {
+        } else if t1 > 0. {
             Some(t1)
-        } else if t2 >= 0. {
+        } else if t2 > 0. {
             Some(t2)
         } else {
             None

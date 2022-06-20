@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 use crate::basic_geometry::vector::Vector;
 
@@ -23,8 +23,29 @@ impl Add<Vector> for Point {
     }
 }
 
+impl Sub for Point {
+    type Output = Vector;
+
+    fn sub(self, other: Point) -> Vector {
+        Vector::new(self.x - other.x, self.y - other.y, self.z - other.z)
+    }
+}
+
 impl From<Vector> for Point {
     fn from(vector: Vector) -> Point {
         Point::new(vector.x, vector.y, vector.z)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::basic_geometry::point::Point;
+
+    #[test]
+    fn vector_from_substraction() {
+        let vector = Point::new(4., 5., 6.) - Point::new(1., 2., 3.);
+        assert_eq!(vector.x, 3.);
+        assert_eq!(vector.y, 3.);
+        assert_eq!(vector.z, 3.);
     }
 }

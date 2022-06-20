@@ -27,7 +27,7 @@ impl Intersect for Disk {
     fn intersect(&self, ray: &Ray) -> Option<f64> {
         let plane = Plane::new(self.normal, self.center);
         match dbg!(plane.intersect(ray)) {
-            Some(t) if t >= 0. => {
+            Some(t) if t > 0. => {
                 let point = ray.at(t);
                 let distance = (Vector::from(point) - Vector::from(self.center)).length();
                 if distance < self.radius {
