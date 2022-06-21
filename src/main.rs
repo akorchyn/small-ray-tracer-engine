@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 use basic_geometry::point::Point;
 use basic_geometry::sphere::Sphere;
+use basic_geometry::{Axis, Transformation};
 use ray_tracer::camera::Camera;
 use ray_tracer::light::Light;
 use ray_tracer::scene::Scene;
@@ -63,11 +64,14 @@ The output file is a image fiile in the PPM file format.";
 fn main() {
     let (source, output) = parse_args();
     let mut scene = Scene::from_obj_file(source).unwrap();
-    scene.add_light(Light::new(Point::new(0.0, 5.0, 10.0)));
-    scene.add_object(Box::new(Sphere::new(Point::new(0.0, 3.0, 4.0), 0.25)));
-    let viewframe = ViewFrame::new(Point::new(0.0, 2.0, 5.0), 3.0, 3.0);
-    let camera = Camera::new(Point::new(0.0, 2.0, 7.0), viewframe);
-    let ray_tracer = RayTracer::new(scene, camera, 500, 500);
+    scene.add_light(Light::new(Point::new(50.0, 0.0, 150.0)));
+    for object in scene.objects_mut().iter_mut() {
+        object.transform(Transformation::Rotation(Axis::Y, 90.0));
+        object.transform(Transformation::Rotation(Axis::Z, 90.0));
+    }
+    let viewframe = ViewFrame::new(Point::new(20.0, 25.0, 80.0), 75.0, 42.0);
+    let camera = Camera::new(Point::new(20.0, 25.0, 130.0), viewframe);
+    let ray_tracer = RayTracer::new(scene, camera, 720, 576);
     ray_tracer
         .render(io::ppm_image::PPMImage::new(output))
         .unwrap();

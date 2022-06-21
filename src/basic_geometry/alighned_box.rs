@@ -4,6 +4,7 @@ use crate::basic_geometry::Point;
 use crate::basic_geometry::Ray;
 
 use super::Intersect;
+use super::Intersection;
 use super::NormalAtPoint;
 
 #[derive(Debug, Clone, Copy)]
@@ -31,7 +32,7 @@ impl AlighnedBox {
 }
 
 impl Intersect for AlighnedBox {
-    fn intersect(&self, ray: &Ray) -> Option<f64> {
+    fn intersect(&self, ray: &Ray) -> Intersection {
         let mut tmin = (self.min.x - ray.origin.x) / ray.direction.x;
         let mut tmax = (self.max.x - ray.origin.x) / ray.direction.x;
 
@@ -47,7 +48,7 @@ impl Intersect for AlighnedBox {
 
         swap_tmin_tmax(&mut tymin, &mut tymax);
         if tmin > tymax || tymin > tmax {
-            return None;
+            return Intersection::DoesNotIntersect;
         }
 
         if tymin > tmin {
@@ -63,22 +64,22 @@ impl Intersect for AlighnedBox {
 
         swap_tmin_tmax(&mut tzmin, &mut tzmax);
         if tmin > tzmax || tzmin > tmax {
-            return None;
+            return Intersection::DoesNotIntersect;
         }
         if tzmin > tmin {
             tmin = tzmin;
         }
 
         if tmin.is_infinite() || tmin.is_nan() {
-            None
+            Intersection::DoesNotIntersect
         } else {
-            Some(tmin)
+            Intersection::Intersect(tmin)
         }
     }
 }
 
 impl NormalAtPoint for AlighnedBox {
-    fn normal_at_point(&self, point: &Point) -> Normal {
+    fn normal_at_point(&self, point: &Point, _: Intersection) -> Normal {
         if (point.x - self.min.x).abs() < 0.001 {
             Normal::new(-1., 0., 0.)
         } else if (point.x - self.max.x).abs() < 0.001 {
@@ -105,6 +106,6 @@ mod tests {
         let box_ = AlighnedBox::from_dimensions(Point::new(0., 0., 0.), 10., 10., 10.);
         let ray = Ray::new(Point::new(0., -20., 0.), Normal::new(0., 1., 0.));
         let t = box_.intersect(&ray);
-        assert_eq!(t, Some(10.));
+        assert_eq!(t, Intersection::Intersect(10.));
     }
 }

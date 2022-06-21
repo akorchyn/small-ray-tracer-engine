@@ -27,11 +27,12 @@ impl Input for ObjectFile {
         let mut scene = Scene::new();
         let mut points = vec![];
         let mut normals = vec![];
+        let mut input_vector = vec![];
 
+        println!("Loading data from obj file...");
         for (i, l) in reader.lines().enumerate() {
             let l = l?;
             let mut iterator = l.split_whitespace();
-            println!("Loading data {}: {}", i, &l);
 
             match iterator.next() {
                 Some("v") => {
@@ -50,35 +51,38 @@ impl Input for ObjectFile {
                     if points.len() < 3 {
                         panic!("Not enough points to make a triangle");
                     }
-                    let mut array = [(Point::new(0.0, 0.0, 0.0), Option::<Normal>::None); 3];
-
-                    for item in &mut array {
-                        let point_line = iterator.next().unwrap();
-                        if !point_line.contains('/') {
-                            let point_index = point_line.parse::<usize>().unwrap();
-                            item.0 = points[point_index - 1];
+                    input_vector.clear();
+                    for point in iterator {
+                        if !point.contains('/') {
+                            let point_index = point.parse::<usize>().unwrap();
+                            input_vector.push((points[point_index - 1], None));
                         } else {
-                            let (p1, n1) = process_point(point_line);
-                            item.0 = points[p1 - 1];
-                            if let Some(n2) = n1 {
-                                item.1 = Some(normals[n2 - 1]);
-                            }
+                            let (p1, n1) = process_point(point);
+                            let data = if let Some(n2) = n1 {
+                                (points[p1 - 1], Some(normals[n2 - 1]))
+                            } else {
+                                (points[p1 - 1], None)
+                            };
+                            input_vector.push(data);
                         }
                     }
 
-                    let triangle = if array[0].1.is_some() {
-                        Triangle::with_normals(
-                            array[0].0,
-                            array[0].1.unwrap(),
-                            array[1].0,
-                            array[1].1.unwrap(),
-                            array[2].0,
-                            array[2].1.unwrap(),
-                        )
-                    } else {
-                        Triangle::new(array[0].0, array[1].0, array[2].0)
-                    };
-                    scene.add_object(Box::new(triangle));
+                    match input_vector.len() {
+                        3 => {
+                            let triangle = get_triangle(&input_vector[..3]);
+                            scene.add_object(Box::new(triangle));
+                        }
+                        4 => {
+                            let triangle = get_triangle(&input_vector[..3]);
+                            scene.add_object(Box::new(triangle));
+                            input_vector.remove(1);
+                            let triangle = get_triangle(&input_vector[..3]);
+                            scene.add_object(Box::new(triangle));
+                        }
+                        _ => {
+                            panic!("Currently only triangles and squares are supported, but received {} points at line {}", input_vector.len(), i + 1);
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -92,6 +96,21 @@ impl Input for ObjectFile {
                 iter.next().unwrap().parse::<usize>().unwrap(),
                 iter.nth(1).map(|i| i.parse::<usize>().unwrap()),
             )
+        }
+
+        fn get_triangle(data: &[(Point, Option<Normal>)]) -> Triangle {
+            if data[0].1.is_some() {
+                Triangle::with_normals(
+                    data[0].0,
+                    data[0].1.unwrap(),
+                    data[1].0,
+                    data[1].1.unwrap(),
+                    data[2].0,
+                    data[2].1.unwrap(),
+                )
+            } else {
+                Triangle::new(data[0].0, data[1].0, data[2].0)
+            }
         }
     }
 }

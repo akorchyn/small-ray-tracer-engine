@@ -1,9 +1,9 @@
 use crate::basic_geometry::point::Point;
 
 pub(crate) struct ViewFrame {
-    pub(crate) origin: Point,
-    pub(crate) width: f64,
-    pub(crate) height: f64,
+    origin: Point,
+    width: f64,
+    height: f64,
 }
 
 impl ViewFrame {

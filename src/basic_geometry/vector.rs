@@ -1,5 +1,6 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+use crate::basic_geometry::matrix::Matrix;
 use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
 
@@ -105,6 +106,18 @@ impl From<Point> for Vector {
 impl From<Normal> for Vector {
     fn from(normal: Normal) -> Vector {
         Vector::new(normal.x, normal.y, normal.z)
+    }
+}
+
+impl From<Matrix<3, 1>> for Vector {
+    fn from(matrix: Matrix<3, 1>) -> Vector {
+        Vector::new(matrix[0][0], matrix[1][0], matrix[2][0])
+    }
+}
+
+impl From<Matrix<1, 3>> for Vector {
+    fn from(matrix: Matrix<1, 3>) -> Vector {
+        Vector::new(matrix[0][0], matrix[0][1], matrix[0][2])
     }
 }
 

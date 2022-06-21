@@ -10,12 +10,14 @@ use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
 use crate::basic_geometry::ray::Ray;
 use crate::basic_geometry::Intersect;
+use crate::basic_geometry::Intersection;
 use crate::basic_geometry::NormalAtPoint;
+use crate::basic_geometry::Transform;
 
 use crate::io::Output;
 
-pub(crate) trait RayTracable: Intersect + NormalAtPoint {}
-impl<T> RayTracable for T where T: Intersect + NormalAtPoint {}
+pub(crate) trait RayTracable: Intersect + NormalAtPoint + Transform {}
+impl<T> RayTracable for T where T: Intersect + NormalAtPoint + Transform {}
 
 pub(crate) struct RayTracer {
     scene: Scene,
@@ -37,17 +39,17 @@ impl RayTracer {
     pub(crate) fn render(&self, output: impl Output) -> Result<(), std::io::Error> {
         let mut buff = vec![-1.0; self.width * self.height];
         for y in 0..self.height {
+            println!("Ray-tracing row: {}/{}", y, self.height);
             for x in 0..self.width {
-                println!("Ray-tracing: {}/{} {}/{}", y, self.height, x, self.width);
                 let ray = self
                     .camera
                     .ray_for_pixel(x, self.height - y, self.width, self.height);
                 let traced = self.trace(&ray);
 
-                if let Some((index, distance)) = traced {
+                if let Some((index, intersection)) = traced {
                     let object = self.scene.objects().get(index).unwrap();
-                    let point = ray.at(distance);
-                    let normal = object.normal_at_point(&point);
+                    let point = ray.at(intersection.distance().unwrap());
+                    let normal = object.normal_at_point(&point, intersection);
                     let intensity = self.light_value(normal, point, index);
                     buff[y * self.width + x] = intensity;
                 }
@@ -61,7 +63,7 @@ impl RayTracer {
             if id == object_id {
                 return false;
             }
-            if let Some(distance) = object.intersect(ray) {
+            if let Some(distance) = object.intersect(ray).distance() {
                 distance > 0.
             } else {
                 false
@@ -86,12 +88,18 @@ impl RayTracer {
             .min(1.0)
     }
 
-    fn trace(&self, ray: &Ray) -> Option<(usize, f64)> {
+    fn trace(&self, ray: &Ray) -> Option<(usize, Intersection)> {
         self.scene
             .objects()
             .iter()
             .enumerate()
-            .flat_map(|(i, object)| object.intersect(ray).map(|distance| (i, distance)))
-            .min_by(|(_, a), (_, b)| a.partial_cmp(b).expect("Expected non NAN distance"))
+            .map(|(i, object)| (i, object.intersect(ray)))
+            .filter(|&(_, intesection)| intesection != Intersection::DoesNotIntersect)
+            .min_by(|&(_, a), &(_, b)| {
+                a.distance()
+                    .unwrap()
+                    .partial_cmp(&b.distance().unwrap())
+                    .expect("Expected non NAN distance")
+            })
     }
 }

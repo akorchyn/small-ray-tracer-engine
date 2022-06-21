@@ -1,9 +1,8 @@
+use super::{Intersect, Intersection, NormalAtPoint, Transform, Transformation};
 use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
 use crate::basic_geometry::ray::Ray;
 use crate::basic_geometry::vector::Vector;
-
-use super::{Intersect, NormalAtPoint};
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Sphere {
@@ -19,34 +18,50 @@ impl Sphere {
 }
 
 impl Intersect for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<f64> {
+    fn intersect(&self, ray: &Ray) -> Intersection {
         let k = Vector::from(ray.origin) - Vector::from(self.center);
         let a = ray.direction.dot(ray.direction);
         let b = 2. * k.dot(Vector::from(ray.direction));
         let c = k.dot(k) - self.radius * self.radius;
         let discriminant = b * b - 4. * a * c;
         if discriminant < 0. {
-            return None;
+            return Intersection::DoesNotIntersect;
         }
         let square_descriminant = discriminant.sqrt();
         let t1 = (-b - square_descriminant) / (2. * a);
         let t2 = (-b + square_descriminant) / (2. * a);
 
         if t1 > 0. && t2 > 0. {
-            Some(t1.min(t2))
+            Intersection::Intersect(t1.min(t2))
         } else if t1 > 0. {
-            Some(t1)
+            Intersection::Intersect(t1)
         } else if t2 > 0. {
-            Some(t2)
+            Intersection::Intersect(t2)
         } else {
-            None
+            Intersection::DoesNotIntersect
         }
     }
 }
 
 impl NormalAtPoint for Sphere {
-    fn normal_at_point(&self, point: &Point) -> Normal {
+    fn normal_at_point(&self, point: &Point, _: Intersection) -> Normal {
         (Vector::from(*point) - Vector::from(self.center)).normalize()
+    }
+}
+
+impl Transform for Sphere {
+    fn transform(&mut self, transformation: Transformation) {
+        match transformation {
+            Transformation::Translation(_) => {
+                self.center = transformation.transformation_to_matrix() * self.center;
+            }
+            Transformation::Scale(scale) => {
+                self.center = transformation.transformation_to_matrix() * self.center;
+                // TODO: if scale is not uniform, this will not work, because it suppose to become a ellipsoid
+                self.radius *= scale.x.max(scale.y).max(scale.z);
+            }
+            Transformation::Rotation(_, _) => {}
+        }
     }
 }
 
@@ -64,7 +79,7 @@ mod tests {
             radius: 1.,
         };
 
-        assert_eq!(sphere.intersect(&ray), Some(4.));
+        assert_eq!(sphere.intersect(&ray), Intersection::Intersect(4.));
     }
 
     #[test]
@@ -75,7 +90,7 @@ mod tests {
             radius: 0.5,
         };
 
-        assert_eq!(sphere.intersect(&ray), None);
+        assert_eq!(sphere.intersect(&ray), Intersection::DoesNotIntersect);
     }
 
     #[test]
@@ -86,6 +101,6 @@ mod tests {
             radius: 1.,
         };
 
-        assert_eq!(sphere.intersect(&ray), None);
+        assert_eq!(sphere.intersect(&ray), Intersection::DoesNotIntersect);
     }
 }

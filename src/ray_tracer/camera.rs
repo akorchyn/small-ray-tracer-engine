@@ -1,14 +1,14 @@
 use crate::basic_geometry::point::Point;
 use crate::basic_geometry::ray::Ray;
-use crate::basic_geometry::vector::Vector;
+use crate::basic_geometry::{Transform, Transformation};
 use crate::ray_tracer::viewframe::ViewFrame;
 
 // Ray-tracing camera.
 pub(crate) struct Camera {
     // Camera position.
-    pub position: Point,
+    position: Point,
     // Camera view frame.
-    pub view_frame: ViewFrame,
+    view_frame: ViewFrame,
 }
 
 impl Camera {
@@ -31,5 +31,12 @@ impl Camera {
             .point_on_pixel(x, y, image_width, image_height);
         let direction = (point - self.position).normalize();
         Ray::new(self.position, direction)
+    }
+}
+
+impl Transform for Camera {
+    fn transform(&mut self, transform: Transformation) {
+        let matrix = transform.transformation_to_matrix();
+        self.position = matrix * self.position;
     }
 }

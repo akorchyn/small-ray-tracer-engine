@@ -30,6 +30,10 @@ impl Scene {
         &self.objects
     }
 
+    pub(crate) fn objects_mut(&mut self) -> &mut Vec<Box<dyn RayTracable>> {
+        &mut self.objects
+    }
+
     pub(crate) fn lights(&self) -> &Vec<Light> {
         &self.lights
     }
