@@ -1,6 +1,8 @@
-use std::ops::{Mul, Neg};
+use std::ops::{Index, Mul, Neg};
 
 use crate::basic_geometry::vector::Vector;
+
+use super::Axis;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct Normal {
@@ -44,6 +46,17 @@ impl Neg for Normal {
             x: -self.x,
             y: -self.y,
             z: -self.z,
+        }
+    }
+}
+
+impl Index<Axis> for Normal {
+    type Output = f64;
+    fn index(&self, index: Axis) -> &Self::Output {
+        match index {
+            Axis::X => &self.x,
+            Axis::Y => &self.y,
+            Axis::Z => &self.z,
         }
     }
 }

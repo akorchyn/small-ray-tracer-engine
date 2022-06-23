@@ -17,7 +17,7 @@ impl Plane {
 }
 
 impl Intersect for Plane {
-    fn intersect(&self, ray: &Ray) -> Intersection {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         // (p - c)*n = 0 plane equation
         // p = (o + t*d) ray equation
         // k = (o - c)
@@ -31,15 +31,15 @@ impl Intersect for Plane {
         let dn = Vector::from(ray.direction).dot(normal);
 
         if dn.abs() <= f64::EPSILON {
-            return Intersection::DoesNotIntersect;
+            return None;
         }
 
         let k = Vector::from(self.center) - Vector::from(ray.origin);
         let t = k.dot(normal) / dn;
         if t > 0. {
-            Intersection::Intersect(t)
+            Some(Intersection::Intersect(t))
         } else {
-            Intersection::DoesNotIntersect
+            None
         }
     }
 }
@@ -60,7 +60,7 @@ mod tests {
         let ray = Ray::new(Point::new(0., 0., 0.), Normal::new(0., 1., 0.));
         let plane = Plane::new(Normal::new(0., -1., 0.), Point::new(0., 50., 0.));
 
-        assert_eq!(plane.intersect(&ray), Intersection::Intersect(50.));
+        assert_eq!(plane.intersect(&ray), Some(Intersection::Intersect(50.)));
     }
 
     #[test]
@@ -68,7 +68,7 @@ mod tests {
         let ray = Ray::new(Point::new(0., 0., 0.), Normal::new(1., 0., 0.));
         let plane = Plane::new(Normal::new(0., -1., 0.), Point::new(0., 50., 0.));
 
-        assert_eq!(plane.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(plane.intersect(&ray), None);
     }
 
     #[test]
@@ -76,7 +76,7 @@ mod tests {
         let ray = Ray::new(Point::new(0., 0., 0.), Normal::new(0., -1., 0.));
         let plane = Plane::new(Normal::new(0., -1., 0.), Point::new(0., 50., 0.));
 
-        assert_eq!(plane.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(plane.intersect(&ray), None);
     }
 
     #[test]
@@ -84,7 +84,7 @@ mod tests {
         let ray = Ray::new(Point::new(2., 0., 0.), Normal::new(0., 1., 0.));
         let plane = Plane::new(Normal::new(0., 1., 0.), Point::new(0., 10., 0.));
 
-        assert_eq!(plane.intersect(&ray), Intersection::Intersect(10.));
+        assert_eq!(plane.intersect(&ray), Some(Intersection::Intersect(10.)));
     }
 
     #[test]
@@ -92,6 +92,6 @@ mod tests {
         let ray = Ray::new(Point::new(1., 0., 0.), Normal::new(1., 0., 0.));
         let plane = Plane::new(Normal::new(0., 1., 0.), Point::new(2., 0., 0.));
 
-        assert_eq!(plane.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(plane.intersect(&ray), None);
     }
 }

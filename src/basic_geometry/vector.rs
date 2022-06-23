@@ -1,8 +1,10 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, Div, Index, Mul, Neg, Sub};
 
 use crate::basic_geometry::matrix::Matrix;
 use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
+
+use super::Axis;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Vector {
@@ -118,6 +120,17 @@ impl From<Matrix<3, 1>> for Vector {
 impl From<Matrix<1, 3>> for Vector {
     fn from(matrix: Matrix<1, 3>) -> Vector {
         Vector::new(matrix[0][0], matrix[0][1], matrix[0][2])
+    }
+}
+
+impl Index<Axis> for Vector {
+    type Output = f64;
+    fn index(&self, index: Axis) -> &Self::Output {
+        match index {
+            Axis::X => &self.x,
+            Axis::Y => &self.y,
+            Axis::Z => &self.z,
+        }
     }
 }
 

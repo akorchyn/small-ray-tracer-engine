@@ -1,8 +1,10 @@
+use super::alighned_box::AlighnedBox;
 use super::{Intersect, Intersection, NormalAtPoint, Transform, Transformation};
 use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
 use crate::basic_geometry::ray::Ray;
 use crate::basic_geometry::vector::Vector;
+use crate::complex_structures::BoundingBox;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Sphere {
@@ -18,27 +20,27 @@ impl Sphere {
 }
 
 impl Intersect for Sphere {
-    fn intersect(&self, ray: &Ray) -> Intersection {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let k = Vector::from(ray.origin) - Vector::from(self.center);
         let a = ray.direction.dot(ray.direction);
         let b = 2. * k.dot(Vector::from(ray.direction));
         let c = k.dot(k) - self.radius * self.radius;
         let discriminant = b * b - 4. * a * c;
         if discriminant < 0. {
-            return Intersection::DoesNotIntersect;
+            return None;
         }
         let square_descriminant = discriminant.sqrt();
         let t1 = (-b - square_descriminant) / (2. * a);
         let t2 = (-b + square_descriminant) / (2. * a);
 
         if t1 > 0. && t2 > 0. {
-            Intersection::Intersect(t1.min(t2))
+            Some(Intersection::Intersect(t1.min(t2)))
         } else if t1 > 0. {
-            Intersection::Intersect(t1)
+            Some(Intersection::Intersect(t1))
         } else if t2 > 0. {
-            Intersection::Intersect(t2)
+            Some(Intersection::Intersect(t2))
         } else {
-            Intersection::DoesNotIntersect
+            None
         }
     }
 }
@@ -65,6 +67,24 @@ impl Transform for Sphere {
     }
 }
 
+impl BoundingBox for Sphere {
+    fn bounding_box(&self) -> AlighnedBox {
+        let point = Point::new(self.radius, self.radius, self.radius);
+        AlighnedBox::new(
+            Point::new(
+                self.center.x - self.radius,
+                self.center.y - self.radius,
+                self.center.z - self.radius,
+            ),
+            Point::new(
+                self.center.x + self.radius,
+                self.center.y + self.radius,
+                self.center.z + self.radius,
+            ),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::basic_geometry::normal::Normal;
@@ -79,7 +99,7 @@ mod tests {
             radius: 1.,
         };
 
-        assert_eq!(sphere.intersect(&ray), Intersection::Intersect(4.));
+        assert_eq!(sphere.intersect(&ray), Some(Intersection::Intersect(4.)));
     }
 
     #[test]
@@ -90,7 +110,7 @@ mod tests {
             radius: 0.5,
         };
 
-        assert_eq!(sphere.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(sphere.intersect(&ray), None);
     }
 
     #[test]
@@ -101,6 +121,6 @@ mod tests {
             radius: 1.,
         };
 
-        assert_eq!(sphere.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(sphere.intersect(&ray), None);
     }
 }

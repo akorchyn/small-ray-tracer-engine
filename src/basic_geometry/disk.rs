@@ -24,19 +24,19 @@ impl Disk {
 }
 
 impl Intersect for Disk {
-    fn intersect(&self, ray: &Ray) -> Intersection {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let plane = Plane::new(self.normal, self.center);
         match plane.intersect(ray) {
-            Intersection::Intersect(t) if t > 0. => {
+            Some(Intersection::Intersect(t)) if t > 0. => {
                 let point = ray.at(t);
                 let distance = (Vector::from(point) - Vector::from(self.center)).length();
                 if distance < self.radius {
-                    Intersection::Intersect(t)
+                    Some(Intersection::Intersect(t))
                 } else {
-                    Intersection::DoesNotIntersect
+                    None
                 }
             }
-            _ => Intersection::DoesNotIntersect,
+            _ => None,
         }
     }
 }
@@ -50,7 +50,7 @@ mod tests {
         let ray = Ray::new(Point::new(0., 0., 0.), Normal::new(0., 1., 0.));
         let disk = Disk::new(Point::new(0., 10., 0.), 1., Normal::new(0., 1., 0.));
 
-        assert_eq!(disk.intersect(&ray), Intersection::Intersect(10.));
+        assert_eq!(disk.intersect(&ray), Some(Intersection::Intersect(10.)));
     }
 
     #[test]
@@ -58,7 +58,7 @@ mod tests {
         let ray = Ray::new(Point::new(0., 0., 0.), Normal::new(1., 0., 0.));
         let disk = Disk::new(Point::new(0., 10., 0.), 1., Normal::new(0., 1., 0.));
 
-        assert_eq!(disk.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(disk.intersect(&ray), None);
     }
 
     #[test]
@@ -66,7 +66,7 @@ mod tests {
         let ray = Ray::new(Point::new(0., 0., 0.), Normal::new(0., -1., 0.));
         let disk = Disk::new(Point::new(0., 10., 0.), 1., Normal::new(0., 1., 0.));
 
-        assert_eq!(disk.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(disk.intersect(&ray), None);
     }
 
     #[test]
@@ -74,6 +74,6 @@ mod tests {
         let ray = Ray::new(Point::new(2., 0., 0.), Normal::new(0., 1., 0.));
         let disk = Disk::new(Point::new(0., 10., 0.), 1., Normal::new(0., 1., 0.));
 
-        assert_eq!(disk.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(disk.intersect(&ray), None);
     }
 }

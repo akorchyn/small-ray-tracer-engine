@@ -19,21 +19,19 @@ use vector::Vector;
 pub(crate) enum Intersection {
     Intersect(f64),
     TriangleIntesersect(f64, f64, f64),
-    DoesNotIntersect,
 }
 
 impl Intersection {
-    pub(crate) fn distance(&self) -> Option<f64> {
+    pub(crate) fn distance(&self) -> f64 {
         match self {
-            &Intersection::Intersect(distance) => Some(distance),
-            &Intersection::TriangleIntesersect(distance, _, _) => Some(distance),
-            Intersection::DoesNotIntersect => None,
+            &Intersection::Intersect(distance) => distance,
+            &Intersection::TriangleIntesersect(distance, _, _) => distance,
         }
     }
 }
 
 pub(crate) trait Intersect {
-    fn intersect(&self, ray: &Ray) -> Intersection;
+    fn intersect(&self, ray: &Ray) -> Option<Intersection>;
 }
 
 pub(crate) trait NormalAtPoint {

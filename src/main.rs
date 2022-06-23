@@ -1,4 +1,5 @@
 mod basic_geometry;
+mod complex_structures;
 mod io;
 mod ray_tracer;
 
@@ -6,15 +7,14 @@ use std::ffi::OsStr;
 use std::path::PathBuf;
 
 use basic_geometry::point::Point;
-use basic_geometry::sphere::Sphere;
 use basic_geometry::{Axis, Transformation};
 use ray_tracer::camera::Camera;
 use ray_tracer::light::Light;
-use ray_tracer::scene::Scene;
+use ray_tracer::scene::{Scene, Tracing};
 use ray_tracer::viewframe::ViewFrame;
 use ray_tracer::RayTracer;
 
-fn parse_args() -> (PathBuf, PathBuf) {
+fn parse_args() -> (PathBuf, PathBuf, Tracing) {
     const HELP_MSG: &str = "./graphics --source=path_to_object.obj --output=path_to_result.ppm\n 
 The ratracer takes two arguments: the input file and the output file.
 The input file is a object file in the Wavefront OBJ format.
@@ -22,6 +22,7 @@ The output file is a image fiile in the PPM file format.";
 
     let mut source: Option<PathBuf> = None;
     let mut output: Option<PathBuf> = None;
+    let mut tracing = Tracing::BVH;
     for arg in std::env::args() {
         if arg == "--help" {
             println!("{}", HELP_MSG);
@@ -51,6 +52,8 @@ The output file is a image fiile in the PPM file format.";
                     std::process::exit(0);
                 }
             }
+        } else if arg.starts_with("--without-tree") {
+            tracing = Tracing::Linear;
         }
     }
 
@@ -58,19 +61,19 @@ The output file is a image fiile in the PPM file format.";
         println!("All required arguments is not provided.\n\n{}", HELP_MSG);
         std::process::exit(0);
     }
-    (source.unwrap(), output.unwrap())
+    (source.unwrap(), output.unwrap(), tracing)
 }
 
 fn main() {
-    let (source, output) = parse_args();
-    let mut scene = Scene::from_obj_file(source).unwrap();
-    scene.add_light(Light::new(Point::new(50.0, 0.0, 150.0)));
-    for object in scene.objects_mut().iter_mut() {
-        object.transform(Transformation::Rotation(Axis::Y, 90.0));
-        object.transform(Transformation::Rotation(Axis::Z, 90.0));
-    }
-    let viewframe = ViewFrame::new(Point::new(20.0, 25.0, 80.0), 75.0, 42.0);
-    let camera = Camera::new(Point::new(20.0, 25.0, 130.0), viewframe);
+    let (source, output, tracing) = parse_args();
+    let mut scene = Scene::from_obj_file(source, tracing).unwrap();
+    scene.add_light(Light::new(Point::new(-50.0, 100.0, 150.0)));
+    // for object in scene.objects_mut().iter_mut() {
+    //     // object.transform(Transformation::Rotation(Axis::Y, 90.0));
+    //     // object.transform(Transformation::Rotation(Axis::Z, 90.0));
+    // }
+    let viewframe = ViewFrame::new(Point::new(0.0, 5.0, 5.0), 5.0, 5.0);
+    let camera = Camera::new(Point::new(0.0, 10.0, 10.0), viewframe);
     let ray_tracer = RayTracer::new(scene, camera, 720, 576);
     ray_tracer
         .render(io::ppm_image::PPMImage::new(output))

@@ -1,11 +1,12 @@
 use std::{
     io::{BufRead, Result},
     path::PathBuf,
+    rc::Rc,
 };
 
 use crate::{
     basic_geometry::{normal::Normal, point::Point, triangle::Triangle, vector::Vector},
-    ray_tracer::scene::Scene,
+    ray_tracer::RayTracable,
 };
 
 use super::Input;
@@ -21,10 +22,10 @@ impl ObjectFile {
 }
 
 impl Input for ObjectFile {
-    fn load(&self) -> Result<Scene> {
+    fn load(&self) -> Result<Vec<Rc<dyn RayTracable>>> {
         let file = std::fs::File::open(&self.path)?;
         let reader = std::io::BufReader::new(file);
-        let mut scene = Scene::new();
+        let mut result: Vec<Rc<dyn RayTracable>> = vec![];
         let mut points = vec![];
         let mut normals = vec![];
         let mut input_vector = vec![];
@@ -70,14 +71,14 @@ impl Input for ObjectFile {
                     match input_vector.len() {
                         3 => {
                             let triangle = get_triangle(&input_vector[..3]);
-                            scene.add_object(Box::new(triangle));
+                            result.push(Rc::new(triangle));
                         }
                         4 => {
                             let triangle = get_triangle(&input_vector[..3]);
-                            scene.add_object(Box::new(triangle));
+                            result.push(Rc::new(triangle));
                             input_vector.remove(1);
                             let triangle = get_triangle(&input_vector[..3]);
-                            scene.add_object(Box::new(triangle));
+                            result.push(Rc::new(triangle));
                         }
                         _ => {
                             panic!("Currently only triangles and squares are supported, but received {} points at line {}", input_vector.len(), i + 1);
@@ -87,8 +88,9 @@ impl Input for ObjectFile {
                 _ => {}
             }
         }
+        println!("Loaded {} objects", result.len());
 
-        return Ok(scene);
+        return Ok(result);
 
         fn process_point(line: &str) -> (usize, Option<usize>) {
             let mut iter = line.split('/');

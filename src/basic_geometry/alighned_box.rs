@@ -3,14 +3,15 @@ use crate::basic_geometry::Normal;
 use crate::basic_geometry::Point;
 use crate::basic_geometry::Ray;
 
+use super::Axis;
 use super::Intersect;
 use super::Intersection;
 use super::NormalAtPoint;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct AlighnedBox {
-    min: Point,
-    max: Point,
+    pub(crate) min: Point,
+    pub(crate) max: Point,
 }
 
 #[allow(dead_code)]
@@ -29,10 +30,65 @@ impl AlighnedBox {
         let center: Vector = center.into();
         AlighnedBox::new((center - size_vector).into(), (center + size_vector).into())
     }
+
+    pub(crate) fn center(&self) -> Point {
+        Point::from((Vector::from(self.min) + Vector::from(self.max)) / 2.)
+    }
+
+    pub(crate) fn union(&self, other: &AlighnedBox) -> AlighnedBox {
+        AlighnedBox::new(
+            Point::new(
+                self.min.x.min(other.min.x),
+                self.min.y.min(other.min.y),
+                self.min.z.min(other.min.z),
+            ),
+            Point::new(
+                self.max.x.max(other.max.x),
+                self.max.y.max(other.max.y),
+                self.max.z.max(other.max.z),
+            ),
+        )
+    }
+
+    pub(crate) fn union_point(&self, other: Point) -> AlighnedBox {
+        AlighnedBox::new(other, other).union(self)
+    }
+
+    pub(crate) fn longest_axis(&self) -> Axis {
+        let x_axis_length = self.max.x - self.min.x;
+        let y_axis_length = self.max.y - self.min.y;
+        let z_axis_length = self.max.z - self.min.z;
+        if x_axis_length > y_axis_length && x_axis_length > z_axis_length {
+            Axis::X
+        } else if y_axis_length > z_axis_length {
+            Axis::Y
+        } else {
+            Axis::Z
+        }
+    }
+
+    pub(crate) fn offset(&self, p: Point) -> Vector {
+        let mut o = p - self.min;
+        if self.max.x > self.min.x {
+            o.x /= self.max.x - self.min.x;
+        }
+        if self.max.y > self.min.y {
+            o.y /= self.max.y - self.min.y;
+        }
+        if self.max.z > self.min.z {
+            o.z /= self.max.z - self.min.z;
+        }
+        o
+    }
+
+    pub(crate) fn surface_area(&self) -> f64 {
+        let d = self.max - self.min;
+        2. * (d.x * d.y + d.x * d.z + d.y * d.z)
+    }
 }
 
 impl Intersect for AlighnedBox {
-    fn intersect(&self, ray: &Ray) -> Intersection {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let mut tmin = (self.min.x - ray.origin.x) / ray.direction.x;
         let mut tmax = (self.max.x - ray.origin.x) / ray.direction.x;
 
@@ -48,7 +104,7 @@ impl Intersect for AlighnedBox {
 
         swap_tmin_tmax(&mut tymin, &mut tymax);
         if tmin > tymax || tymin > tmax {
-            return Intersection::DoesNotIntersect;
+            return None;
         }
 
         if tymin > tmin {
@@ -64,16 +120,16 @@ impl Intersect for AlighnedBox {
 
         swap_tmin_tmax(&mut tzmin, &mut tzmax);
         if tmin > tzmax || tzmin > tmax {
-            return Intersection::DoesNotIntersect;
+            return None;
         }
         if tzmin > tmin {
             tmin = tzmin;
         }
 
         if tmin.is_infinite() || tmin.is_nan() {
-            Intersection::DoesNotIntersect
+            None
         } else {
-            Intersection::Intersect(tmin)
+            Some(Intersection::Intersect(tmin))
         }
     }
 }
@@ -97,6 +153,18 @@ impl NormalAtPoint for AlighnedBox {
         }
     }
 }
+
+impl Default for AlighnedBox {
+    fn default() -> AlighnedBox {
+        let smallest = std::f64::MIN;
+        let largest = std::f64::MAX;
+        AlighnedBox::new(
+            Point::new(largest, largest, largest),
+            Point::new(smallest, smallest, smallest),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -106,6 +174,6 @@ mod tests {
         let box_ = AlighnedBox::from_dimensions(Point::new(0., 0., 0.), 10., 10., 10.);
         let ray = Ray::new(Point::new(0., -20., 0.), Normal::new(0., 1., 0.));
         let t = box_.intersect(&ray);
-        assert_eq!(t, Intersection::Intersect(10.));
+        assert_eq!(t, Some(Intersection::Intersect(10.)));
     }
 }

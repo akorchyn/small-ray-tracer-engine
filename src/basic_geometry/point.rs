@@ -1,10 +1,10 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Index, Sub};
 
 use crate::basic_geometry::vector::Vector;
 
-use super::matrix::Matrix;
+use super::{matrix::Matrix, Axis};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub(crate) struct Point {
     pub(crate) x: f64,
     pub(crate) y: f64,
@@ -48,6 +48,17 @@ impl From<Matrix<3, 1>> for Point {
 impl From<Matrix<1, 3>> for Point {
     fn from(matrix: Matrix<1, 3>) -> Point {
         Point::new(matrix[0][0], matrix[0][1], matrix[0][2])
+    }
+}
+
+impl Index<Axis> for Point {
+    type Output = f64;
+    fn index(&self, index: Axis) -> &Self::Output {
+        match index {
+            Axis::X => &self.x,
+            Axis::Y => &self.y,
+            Axis::Z => &self.z,
+        }
     }
 }
 

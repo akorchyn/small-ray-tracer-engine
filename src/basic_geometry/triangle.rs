@@ -1,10 +1,11 @@
-use crate::basic_geometry::point::Point;
+use crate::{basic_geometry::point::Point, complex_structures::BoundingBox};
 
 use super::{
-    normal::Normal, ray::Ray, vector::Vector, Intersect, Intersection, NormalAtPoint, Transform,
-    Transformation,
+    alighned_box::AlighnedBox, normal::Normal, ray::Ray, vector::Vector, Intersect, Intersection,
+    NormalAtPoint, Transform, Transformation,
 };
 
+#[derive(Debug, Clone)]
 pub(crate) struct Triangle {
     a: Vector,
     b: Vector,
@@ -55,33 +56,37 @@ impl Triangle {
 }
 
 impl Intersect for Triangle {
-    fn intersect(&self, ray: &Ray) -> Intersection {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let ab = self.b - self.a;
         let ac = self.c - self.a;
         let normal = Vector::from(ray.direction).cross(ac);
 
         let d = ab.dot(normal);
         if d.abs() < f64::EPSILON {
-            return Intersection::DoesNotIntersect;
+            return None;
         }
 
         let inv_d = 1.0 / d;
         let ao = Vector::from(ray.origin) - self.a;
         let u_coordinate = ao.dot(normal) * inv_d;
         if !(0.0..=1.0).contains(&u_coordinate) {
-            return Intersection::DoesNotIntersect;
+            return None;
         }
 
         let ao_cross_ab = ao.cross(ab);
         let v_coordinate = Vector::from(ray.direction).dot(ao_cross_ab) * inv_d;
         if v_coordinate < 0.0 || u_coordinate + v_coordinate > 1.0 {
-            return Intersection::DoesNotIntersect;
+            return None;
         }
         let t = ac.dot(ao_cross_ab) * inv_d;
         if t > f64::EPSILON {
-            Intersection::TriangleIntesersect(t, u_coordinate, v_coordinate)
+            Some(Intersection::TriangleIntesersect(
+                t,
+                u_coordinate,
+                v_coordinate,
+            ))
         } else {
-            Intersection::DoesNotIntersect
+            None
         }
     }
 }
@@ -113,6 +118,24 @@ impl Transform for Triangle {
     }
 }
 
+impl BoundingBox for Triangle {
+    fn bounding_box(&self) -> AlighnedBox {
+        let min = Point::new(
+            self.a.x.min(self.b.x).min(self.c.x),
+            self.a.y.min(self.b.y).min(self.c.y),
+            self.a.z.min(self.b.z).min(self.c.z),
+        );
+
+        let max = Point::new(
+            self.a.x.max(self.b.x).max(self.c.x),
+            self.a.y.max(self.b.y).max(self.c.y),
+            self.a.z.max(self.b.z).max(self.c.z),
+        );
+
+        AlighnedBox::new(min, max)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::basic_geometry::normal::Normal;
@@ -131,7 +154,7 @@ mod tests {
         let ray = Ray::new(Point::new(0.5, 0.5, 2.0), Normal::new(0., 0.0, -0.5));
         assert_eq!(
             triangle.intersect(&ray),
-            Intersection::TriangleIntesersect(4.0, 0.5, 0.5)
+            Some(Intersection::TriangleIntesersect(4.0, 0.5, 0.5))
         );
     }
 
@@ -143,6 +166,6 @@ mod tests {
             Point::new(0., 1., 0.),
         );
         let ray = Ray::new(Point::new(1.1, 0.5, 2.0), Normal::new(0., 0.0, -0.5));
-        assert_eq!(triangle.intersect(&ray), Intersection::DoesNotIntersect);
+        assert_eq!(triangle.intersect(&ray), None);
     }
 }

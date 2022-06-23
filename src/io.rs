@@ -1,6 +1,7 @@
 use std::io::Result;
+use std::rc::Rc;
 
-use crate::ray_tracer::scene::Scene;
+use crate::ray_tracer::RayTracable;
 
 pub(crate) mod console;
 pub(crate) mod obj_file;
@@ -11,5 +12,5 @@ pub(crate) trait Output {
 }
 
 pub(crate) trait Input {
-    fn load(&self) -> Result<Scene>;
+    fn load(&self) -> Result<Vec<Rc<dyn RayTracable>>>;
 }
