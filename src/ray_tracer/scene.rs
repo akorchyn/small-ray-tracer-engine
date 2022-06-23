@@ -1,3 +1,4 @@
+use std::cell::{Ref, RefCell};
 use std::io::Result;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -11,12 +12,12 @@ use crate::io::Input;
 use super::light::Light;
 use super::RayTracable;
 
-struct LinearTracer {
-    objects: Vec<Rc<dyn RayTracable>>,
+pub(crate) struct LinearTracer {
+    objects: Vec<Rc<RefCell<dyn RayTracable>>>,
 }
 
 impl LinearTracer {
-    pub(crate) fn new(objects: Vec<Rc<dyn RayTracable>>) -> LinearTracer {
+    pub(crate) fn new(objects: Vec<Rc<RefCell<dyn RayTracable>>>) -> LinearTracer {
         LinearTracer { objects }
     }
 
@@ -31,7 +32,12 @@ impl ObjectContainer for LinearTracer {
         self.objects
             .iter()
             .enumerate()
-            .flat_map(|(i, object)| object.intersect(ray).map(|intersection| (i, intersection)))
+            .flat_map(|(i, object)| {
+                object
+                    .borrow()
+                    .intersect(ray)
+                    .map(|intersection| (i, intersection))
+            })
             .min_by(|&(_, a), &(_, b)| {
                 a.distance()
                     .partial_cmp(&b.distance())
@@ -39,8 +45,8 @@ impl ObjectContainer for LinearTracer {
             })
     }
 
-    fn object_by_index(&self, index: usize) -> &dyn RayTracable {
-        self.objects[index].as_ref()
+    fn object_by_index(&self, index: usize) -> Ref<dyn RayTracable> {
+        self.objects[index].borrow()
     }
 }
 

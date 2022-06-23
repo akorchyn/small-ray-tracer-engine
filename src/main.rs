@@ -8,11 +8,12 @@ use std::path::PathBuf;
 
 use basic_geometry::point::Point;
 use basic_geometry::{Axis, Transformation};
+use io::Input;
 use ray_tracer::camera::Camera;
 use ray_tracer::light::Light;
 use ray_tracer::scene::{Scene, Tracing};
 use ray_tracer::viewframe::ViewFrame;
-use ray_tracer::RayTracer;
+use ray_tracer::{ObjectContainer, RayTracer};
 
 fn parse_args() -> (PathBuf, PathBuf, Tracing) {
     const HELP_MSG: &str = "./graphics --source=path_to_object.obj --output=path_to_result.ppm\n 
@@ -66,16 +67,31 @@ The output file is a image fiile in the PPM file format.";
 
 fn main() {
     let (source, output, tracing) = parse_args();
-    let mut scene = Scene::from_obj_file(source, tracing).unwrap();
-    scene.add_light(Light::new(Point::new(-50.0, 100.0, 150.0)));
-    // for object in scene.objects_mut().iter_mut() {
-    //     // object.transform(Transformation::Rotation(Axis::Y, 90.0));
-    //     // object.transform(Transformation::Rotation(Axis::Z, 90.0));
-    // }
-    let viewframe = ViewFrame::new(Point::new(0.0, 5.0, 5.0), 5.0, 5.0);
-    let camera = Camera::new(Point::new(0.0, 10.0, 10.0), viewframe);
-    let ray_tracer = RayTracer::new(scene, camera, 720, 576);
-    ray_tracer
-        .render(io::ppm_image::PPMImage::new(output))
-        .unwrap();
+    let loader = io::obj_file::ObjectFile::new(source);
+    match loader.load() {
+        Err(e) => {
+            println!("Failed to process object file:\n{}", e);
+            std::process::exit(1);
+        }
+        Ok(objects) => {
+            for object in objects.iter() {
+                let mut object = object.borrow_mut();
+                object.transform(Transformation::Rotation(Axis::Y, 90.0));
+                // object.transform(Transformation::Rotation(Axis::Z, 90.0));
+            }
+            let tracer: Box<dyn ObjectContainer> = match tracing {
+                Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 32)),
+                Tracing::Linear => Box::new(ray_tracer::scene::LinearTracer::new(objects)),
+            };
+            let mut scene = Scene::new(tracer);
+            scene.add_light(Light::new(Point::new(-50.0, 100.0, 150.0)));
+
+            let viewframe = ViewFrame::new(Point::new(75.0, 00.0, 200.0), 48.0, 27.0);
+            let camera = Camera::new(Point::new(75.0, 00.0, 250.0), viewframe);
+            let ray_tracer = RayTracer::new(scene, camera, 3840, 2160);
+            ray_tracer
+                .render(io::ppm_image::PPMImage::new(output))
+                .unwrap();
+        }
+    }
 }

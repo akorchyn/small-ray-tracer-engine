@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::io::Result;
 use std::rc::Rc;
 
@@ -12,5 +13,5 @@ pub(crate) trait Output {
 }
 
 pub(crate) trait Input {
-    fn load(&self) -> Result<Vec<Rc<dyn RayTracable>>>;
+    fn load(&self) -> Result<Vec<Rc<RefCell<dyn RayTracable>>>>;
 }

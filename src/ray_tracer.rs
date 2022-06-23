@@ -3,6 +3,8 @@ pub(crate) mod light;
 pub(crate) mod scene;
 pub(crate) mod viewframe;
 
+use std::cell::Ref;
+
 use camera::Camera;
 use scene::Scene;
 
@@ -23,7 +25,7 @@ impl<T> RayTracable for T where T: Intersect + NormalAtPoint + Transform + Bound
 
 pub(crate) trait ObjectContainer {
     fn trace(&self, ray: &Ray) -> Option<(usize, Intersection)>;
-    fn object_by_index(&self, index: usize) -> &dyn RayTracable;
+    fn object_by_index(&self, index: usize) -> Ref<dyn RayTracable>;
 }
 
 pub(crate) struct RayTracer {

@@ -1,4 +1,9 @@
-use std::{collections::VecDeque, path::PathBuf, rc::Rc};
+use std::{
+    cell::{Ref, RefCell},
+    collections::VecDeque,
+    path::PathBuf,
+    rc::Rc,
+};
 
 use crate::{
     basic_geometry::{
@@ -19,7 +24,7 @@ struct BVHNode {
 }
 
 pub(crate) struct BVHTree {
-    data: Vec<Rc<dyn RayTracable>>,
+    data: Vec<Rc<RefCell<dyn RayTracable>>>,
     nodes: Vec<BVHNode>,
     max_primitives_in_node: usize,
     root: Option<usize>,
@@ -54,7 +59,7 @@ impl ObjectContainer for BVHTree {
 
                     for i in node.start..node.end {
                         let object = &self.data[i];
-                        if let Some(intersection) = object.intersect(&ray) {
+                        if let Some(intersection) = object.borrow().intersect(&ray) {
                             intersections.push((i, intersection));
                         }
                     }
@@ -76,8 +81,8 @@ impl ObjectContainer for BVHTree {
         })
     }
 
-    fn object_by_index(&self, index: usize) -> &dyn RayTracable {
-        self.data[index].as_ref()
+    fn object_by_index(&self, index: usize) -> Ref<dyn RayTracable> {
+        self.data[index].borrow()
     }
 }
 
@@ -87,12 +92,15 @@ impl BVHTree {
         Ok(Self::new(loader.load()?, 32))
     }
 
-    pub(crate) fn new(objects: Vec<Rc<dyn RayTracable>>, max_primitives_in_node: usize) -> BVHTree {
+    pub(crate) fn new(
+        objects: Vec<Rc<RefCell<dyn RayTracable>>>,
+        max_primitives_in_node: usize,
+    ) -> BVHTree {
         println!("Building BVH tree...");
         let mut info: Vec<_> = objects
             .iter()
             .enumerate()
-            .map(|(i, o)| BVHObjectInfo::new(i, o.bounding_box()))
+            .map(|(i, o)| BVHObjectInfo::new(i, o.borrow().bounding_box()))
             .collect();
 
         let mut root = BVHTree {
@@ -119,7 +127,7 @@ impl BVHTree {
         &mut self,
         info: &mut Vec<BVHObjectInfo>,
         max_primitives_in_node: usize,
-        objects: &mut Vec<Rc<dyn RayTracable>>,
+        objects: &mut Vec<Rc<RefCell<dyn RayTracable>>>,
         start: usize,
         end: usize,
     ) -> Option<usize> {
