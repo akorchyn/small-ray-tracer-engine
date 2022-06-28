@@ -2,11 +2,13 @@ use crate::basic_geometry::vector::Vector;
 use crate::basic_geometry::Normal;
 use crate::basic_geometry::Point;
 use crate::basic_geometry::Ray;
+use crate::complex_structures::BoundingBox;
 
 use super::Axis;
 use super::Intersect;
 use super::Intersection;
 use super::NormalAtPoint;
+use super::Transform;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct AlighnedBox {
@@ -139,7 +141,7 @@ impl NormalAtPoint for AlighnedBox {
         if (point.x - self.min.x).abs() < 0.001 {
             Normal::new(-1., 0., 0.)
         } else if (point.x - self.max.x).abs() < 0.001 {
-            Normal::new(01., 0., 0.)
+            Normal::new(1., 0., 0.)
         } else if (point.y - self.min.y).abs() < 0.001 {
             Normal::new(0., -1., 0.)
         } else if (point.y - self.max.y).abs() < 0.001 {
@@ -162,6 +164,20 @@ impl Default for AlighnedBox {
             Point::new(largest, largest, largest),
             Point::new(smallest, smallest, smallest),
         )
+    }
+}
+
+impl Transform for AlighnedBox {
+    fn transform(&mut self, tranform: super::Transformation) {
+        let matrix = tranform.transformation_to_matrix();
+        self.min = matrix * self.min;
+        self.max = matrix * self.max;
+    }
+}
+
+impl BoundingBox for AlighnedBox {
+    fn bounding_box(&self) -> AlighnedBox {
+        *self
     }
 }
 

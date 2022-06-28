@@ -1,4 +1,4 @@
-use crate::basic_geometry::point::Point;
+use crate::basic_geometry::{point::Point, Transform, Transformation};
 
 pub(crate) struct ViewFrame {
     origin: Point,
@@ -32,5 +32,17 @@ impl ViewFrame {
             self.origin.y - self.height / 2.0 + y_offset,
             self.origin.z,
         )
+    }
+}
+
+impl Transform for ViewFrame {
+    fn transform(&mut self, transform: Transformation) {
+        let matrix = transform.transformation_to_matrix();
+        self.origin = matrix * self.origin;
+
+        if let Transformation::Scale(scale) = transform {
+            self.width *= scale.x;
+            self.height *= scale.y;
+        }
     }
 }

@@ -15,6 +15,7 @@ use crate::basic_geometry::Intersect;
 use crate::basic_geometry::Intersection;
 use crate::basic_geometry::NormalAtPoint;
 use crate::basic_geometry::Transform;
+use crate::basic_geometry::Transformation;
 
 use crate::complex_structures::BoundingBox;
 use crate::io::Output;
@@ -45,10 +46,14 @@ impl RayTracer {
         }
     }
 
-    pub(crate) fn render(&self, output: impl Output) -> Result<(), std::io::Error> {
+    pub(crate) fn transform_camera(&mut self, transformation: Transformation) {
+        self.camera.transform(transformation)
+    }
+
+    pub(crate) fn render(&self, output: &mut dyn Output) -> Result<(), std::io::Error> {
         let mut buff = vec![-1.0; self.width * self.height];
+        println!("Rendering...");
         for y in 0..self.height {
-            println!("Ray-tracing row: {}/{}", y, self.height);
             for x in 0..self.width {
                 let ray = self
                     .camera
@@ -64,6 +69,7 @@ impl RayTracer {
                 }
             }
         }
+        println!("Rendering done.");
         output.dump(&buff, self.width, self.height)
     }
     fn light_value(&self, normal: Normal, intersection_point: Point) -> f64 {
@@ -73,11 +79,11 @@ impl RayTracer {
             .map(|light| {
                 let light_dir = (light.position - intersection_point).normalize();
                 let ray = Ray::new(intersection_point, light_dir);
-                let ray = Ray::new(ray.at(1.0), light_dir);
+                let ray = Ray::new(ray.at(1e-4), light_dir);
                 if self.scene.objects().trace(&ray).is_some() {
-                    (light_dir.dot(normal) * 0.5).max(0.0)
+                    0.0
                 } else {
-                    light_dir.dot(normal).max(0.0)
+                    light_dir.dot(normal).abs()
                 }
             })
             .sum::<f64>()

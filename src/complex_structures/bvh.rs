@@ -89,7 +89,7 @@ impl ObjectContainer for BVHTree {
 impl BVHTree {
     pub(crate) fn from_obj_file(path: PathBuf) -> std::io::Result<BVHTree> {
         let loader = crate::io::obj_file::ObjectFile::new(path);
-        Ok(Self::new(loader.load()?, 32))
+        Ok(Self::new(loader.load()?, 100))
     }
 
     pub(crate) fn new(

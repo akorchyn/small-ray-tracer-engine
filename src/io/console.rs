@@ -5,7 +5,7 @@ use crate::io::Output;
 pub(crate) struct Console {}
 
 impl Output for Console {
-    fn dump(&self, buff: &[f64], width: usize, height: usize) -> Result<()> {
+    fn dump(&mut self, buff: &[f64], width: usize, height: usize) -> Result<()> {
         let mut stream = BufWriter::with_capacity(width * height, std::io::stdout());
         for y in 0..height {
             for x in 0..width {
@@ -24,5 +24,9 @@ impl Output for Console {
         }
         stream.flush()?;
         Ok(())
+    }
+
+    fn process(&mut self, ray_tracer: crate::ray_tracer::RayTracer) -> Result<()> {
+        ray_tracer.render(self)
     }
 }

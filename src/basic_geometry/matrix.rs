@@ -111,16 +111,14 @@ impl<const COLUMN: usize> Mul<Vector> for Matrix<4, COLUMN> {
     type Output = Vector;
     fn mul(self, rhs: Vector) -> Self::Output {
         let result = self.mul(from_vector(rhs));
-        debug_assert!(result[4][0] == 1.0);
         Vector::new(result[0][0], result[1][0], result[2][0])
     }
 }
 
-impl<const COLUMN: usize> Mul<Point> for Matrix<4, COLUMN> {
+impl Mul<Point> for Matrix<4, 4> {
     type Output = Point;
     fn mul(self, rhs: Point) -> Self::Output {
         let result = self.mul(from_point(rhs));
-        debug_assert!(result[4][0] == 0.0);
         Point::new(result[0][0], result[1][0], result[2][0])
     }
 }
@@ -134,7 +132,7 @@ impl<const COLUMN: usize> Mul<Normal> for Matrix<4, COLUMN> {
 
 pub(crate) fn from_point(point: Point) -> Matrix<4, 1> {
     Matrix {
-        data: [[point.x], [point.y], [point.z], [0.0]],
+        data: [[point.x], [point.y], [point.z], [1.0]],
     }
 }
 
@@ -163,5 +161,20 @@ mod tests {
             m3,
             Matrix::<3, 3>::with_data([[190., 200., 210.], [470., 496., 522.], [750., 792., 834.]])
         );
+    }
+
+    #[test]
+    fn test_translation() {
+        let t = Matrix::translation(Vector::new(1.0, 2.0, 3.0));
+        let matrix = Matrix::<4, 4>::with_data([
+            [1.0, 0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0, 2.0],
+            [0.0, 0.0, 1.0, 3.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
+        assert_eq!(t, matrix);
+        let p = Point::new(4.0, 5.0, 6.0);
+        let expected = Point::new(5.0, 7.0, 9.0);
+        assert_eq!(t * p, expected);
     }
 }

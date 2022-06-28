@@ -8,9 +8,9 @@ use super::Axis;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Vector {
-    pub(super) x: f64,
-    pub(super) y: f64,
-    pub(super) z: f64,
+    pub(crate) x: f64,
+    pub(crate) y: f64,
+    pub(crate) z: f64,
 }
 
 impl Vector {
