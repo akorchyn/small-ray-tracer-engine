@@ -88,10 +88,10 @@ fn main() {
                 Tracing::Linear => Box::new(ray_tracer::scene::LinearTracer::new(objects)),
             };
             let mut scene = Scene::new(tracer);
-            scene.add_light(Light::new(Point::new(0.0, 0.0, 50.0)));
+            scene.add_light(Light::new(Point::new(0.0, 100.0, 100.0)));
 
-            let viewframe = ViewFrame::new(Point::new(0.0, 0.0, 5.0), 3.0, 3.0);
-            let camera = Camera::new(Point::new(0.0, 0.0, 10.0), viewframe);
+            let viewframe = ViewFrame::new(Point::new(0.0, 0.0, 250.0), 25.0, 25.0);
+            let camera = Camera::new(Point::new(0.0, 0.0, 275.0), viewframe);
             let ray_tracer = RayTracer::new(scene, camera, 500, 500);
             let mut output = output.create_handler();
             output.process(ray_tracer).unwrap()

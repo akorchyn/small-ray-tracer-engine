@@ -7,7 +7,8 @@ use std::{
 
 use crate::{
     basic_geometry::{
-        alighned_box::AlighnedBox, point::Point, ray::Ray, Axis, Intersect, Intersection,
+        alighned_box::AlighnedBox, point::Point, ray::Ray, vector::Vector, Axis, Intersect,
+        Intersection,
     },
     io::Input,
     ray_tracer::{ObjectContainer, RayTracable},
@@ -45,18 +46,6 @@ impl ObjectContainer for BVHTree {
             let node = &self.nodes[node_index];
             if node.bounding_box.intersect(&ray).is_some() {
                 if node.end != node.start {
-                    // self.data[node.start..node.end]
-                    //     .iter()
-                    //     .enumerate()
-                    //     .filter_map(|(i, object)| {
-                    //         object.intersect(&ray).map(|intersection| (i, intersection))
-                    //     })
-                    //     .min_by(|&(_, a), &(_, b)| {
-                    //         a.distance()
-                    //             .partial_cmp(&b.distance())
-                    //             .expect("Expected non NAN distance")
-                    //     })
-
                     for i in node.start..node.end {
                         let object = &self.data[i];
                         if let Some(intersection) = object.borrow().intersect(&ray) {
@@ -74,11 +63,9 @@ impl ObjectContainer for BVHTree {
                 }
             }
         }
-        intersections.into_iter().min_by(|&(_, a), &(_, b)| {
-            a.distance()
-                .partial_cmp(&b.distance())
-                .expect("Expected non NAN distance")
-        })
+        intersections
+            .into_iter()
+            .min_by(|&(_, a), (_, b)| a.distance().total_cmp(&b.distance()))
     }
 
     fn object_by_index(&self, index: usize) -> Ref<dyn RayTracable> {
@@ -89,7 +76,7 @@ impl ObjectContainer for BVHTree {
 impl BVHTree {
     pub(crate) fn from_obj_file(path: PathBuf) -> std::io::Result<BVHTree> {
         let loader = crate::io::obj_file::ObjectFile::new(path);
-        Ok(Self::new(loader.load()?, 100))
+        Ok(Self::new(loader.load()?, 1))
     }
 
     pub(crate) fn new(
@@ -165,7 +152,7 @@ impl BVHTree {
             } else {
                 if n <= 4 {
                     info.as_mut_slice()[start..end]
-                        .sort_by(|a, b| a.position[axis].partial_cmp(&b.position[axis]).unwrap());
+                        .sort_by(|a, b| a.position[axis].total_cmp(&b.position[axis]));
                 } else {
                     const N: usize = 12;
                     #[derive(Copy, Clone)]
@@ -208,9 +195,7 @@ impl BVHTree {
                     let (min_bucket, min_cost) = cost
                         .into_iter()
                         .enumerate()
-                        .min_by(|&(_, c0), (_, c1)| {
-                            c0.partial_cmp(c1).expect("NaN value is not expected")
-                        })
+                        .min_by(|&(_, c0), (_, c1)| c0.total_cmp(c1))
                         .unwrap();
                     let leaf_cost = n as f64;
                     if n > self.max_primitives_in_node || min_cost < leaf_cost {

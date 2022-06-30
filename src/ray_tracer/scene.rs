@@ -38,11 +38,7 @@ impl ObjectContainer for LinearTracer {
                     .intersect(ray)
                     .map(|intersection| (i, intersection))
             })
-            .min_by(|&(_, a), &(_, b)| {
-                a.distance()
-                    .partial_cmp(&b.distance())
-                    .expect("Expected non NAN distance")
-            })
+            .min_by(|&(_, a), &(_, b)| a.distance().total_cmp(&b.distance()))
     }
 
     fn object_by_index(&self, index: usize) -> Ref<dyn RayTracable> {
