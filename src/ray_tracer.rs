@@ -17,6 +17,7 @@ use crate::basic_geometry::NormalAtPoint;
 use crate::basic_geometry::Transform;
 use crate::basic_geometry::Transformation;
 
+use crate::basic_geometry::vector::Vector;
 use crate::complex_structures::BoundingBox;
 use crate::io::Output;
 
@@ -48,6 +49,10 @@ impl RayTracer {
 
     pub(crate) fn transform_camera(&mut self, transformation: Transformation) {
         self.camera.transform(transformation)
+    }
+
+    pub(crate) fn rotation_vector(&self) -> Vector {
+        self.camera.rotation_vector()
     }
 
     pub(crate) fn render(&self, output: &mut dyn Output) -> Result<(), std::io::Error> {

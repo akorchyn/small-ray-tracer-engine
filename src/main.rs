@@ -84,7 +84,7 @@ fn main() {
         }
         Ok(objects) => {
             let tracer: Box<dyn ObjectContainer> = match tracing {
-                Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 32)),
+                Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 100)),
                 Tracing::Linear => Box::new(ray_tracer::scene::LinearTracer::new(objects)),
             };
             let mut scene = Scene::new(tracer);

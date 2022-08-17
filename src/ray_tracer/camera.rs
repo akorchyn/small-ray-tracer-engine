@@ -22,6 +22,10 @@ impl Camera {
         }
     }
 
+    pub(crate) fn rotation_vector(&self) -> Vector {
+        self.rotation_angles
+    }
+
     pub(crate) fn ray_for_pixel(
         &self,
         x: usize,

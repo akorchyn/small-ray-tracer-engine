@@ -26,13 +26,15 @@ impl Window {
         let keys = self.window.get_keys();
         keys.iter().for_each(|key| match key {
             Key::W => {
-                ray_tracer
-                    .transform_camera(Transformation::Translation(Vector::new(0.0, 0.0, -0.5)));
+                ray_tracer.transform_camera(Transformation::Translation(-movement(
+                    ray_tracer.rotation_vector(),
+                )));
                 handled_event = true;
             }
             Key::S => {
-                ray_tracer
-                    .transform_camera(Transformation::Translation(Vector::new(0.0, 0.0, 0.5)));
+                ray_tracer.transform_camera(Transformation::Translation(movement(
+                    ray_tracer.rotation_vector(),
+                )));
                 handled_event = true;
             }
             Key::A => {
@@ -116,4 +118,16 @@ impl Output for Window {
         }
         Ok(())
     }
+}
+
+fn movement(camera_angles: Vector) -> Vector {
+    let movement = 0.5;
+    let pitch = camera_angles.x.to_radians();
+    let yaw = camera_angles.y.to_radians();
+
+    let x = movement * yaw.sin() * pitch.cos();
+    let y = movement * -pitch.sin();
+    let z = movement * yaw.cos() * pitch.cos();
+
+    Vector::new(x, y, z)
 }

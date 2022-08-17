@@ -51,6 +51,14 @@ impl Mul for Vector {
     }
 }
 
+impl Mul<f64> for Vector {
+    type Output = Vector;
+
+    fn mul(self, other: f64) -> Vector {
+        Vector::new(self.x * other, self.y * other, self.z * other)
+    }
+}
+
 impl Add for Vector {
     type Output = Vector;
 
