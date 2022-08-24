@@ -88,7 +88,7 @@ impl RayTracer {
                 if self.scene.objects().trace(&ray).is_some() {
                     0.0
                 } else {
-                    light_dir.dot(normal).abs()
+                    light_dir.dot(normal).max(0.0)
                 }
             })
             .sum::<f64>()
