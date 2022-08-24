@@ -1,12 +1,9 @@
-use std::f32::INFINITY;
-
+use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
 use crate::basic_geometry::ray::Ray;
 use crate::basic_geometry::vector::Vector;
-use crate::{basic_geometry::normal::Normal, complex_structures::BoundingBox};
 
-use super::alighned_box::AlighnedBox;
-use super::{Intersect, Intersection, NormalAtPoint, Transform, Transformation};
+use super::{Intersect, Intersection, NormalAtPoint};
 
 pub(crate) struct Plane {
     pub(crate) normal: Normal,

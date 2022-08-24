@@ -69,7 +69,6 @@ impl Transform for Sphere {
 
 impl BoundingBox for Sphere {
     fn bounding_box(&self) -> AlighnedBox {
-        let point = Point::new(self.radius, self.radius, self.radius);
         AlighnedBox::new(
             Point::new(
                 self.center.x - self.radius,

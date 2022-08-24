@@ -3,7 +3,7 @@ use std::io::Result;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use crate::ray_tracer::{self, RayTracable, RayTracer};
+use crate::ray_tracer::{RayTracable, RayTracer};
 
 pub(crate) mod console;
 pub(crate) mod obj_file;

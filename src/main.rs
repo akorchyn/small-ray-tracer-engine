@@ -3,13 +3,13 @@ mod complex_structures;
 mod io;
 mod ray_tracer;
 
+use std::cell::RefCell;
 use std::ffi::OsStr;
 use std::path::PathBuf;
+use std::rc::Rc;
 
-use basic_geometry::alighned_box::AlighnedBox;
 use basic_geometry::point::Point;
-use basic_geometry::vector::Vector;
-use basic_geometry::{Axis, Transformation};
+use basic_geometry::sphere::Sphere;
 use io::Input;
 use ray_tracer::camera::Camera;
 use ray_tracer::light::Light;
@@ -19,15 +19,20 @@ use ray_tracer::{ObjectContainer, RayTracer};
 
 use crate::io::OutputType;
 
-fn parse_args() -> (PathBuf, OutputType, Tracing) {
-    const HELP_MSG: &str = "./graphics --source=path_to_object.obj --output=path_to_result.ppm\n 
+type IsSphereNeeded = bool;
+
+fn parse_args() -> (PathBuf, OutputType, Tracing, IsSphereNeeded) {
+    const HELP_MSG: &str = "./graphics --source=path_to_object.obj [--output=path_to_result.ppm, --windowed, --console]\n 
 The ratracer takes two arguments: the input file and the output file.
 The input file is a object file in the Wavefront OBJ format.
-The output file is a image fiile in the PPM file format.";
+The output is either a file or one of the other output formats (window, console).
+Optional arguments:
+--add-sphere - add predefined sphere";
 
     let mut source: Option<PathBuf> = None;
     let mut output: Option<OutputType> = None;
     let mut tracing = Tracing::BVH;
+    let mut add_sphere = false;
     for arg in std::env::args() {
         if arg == "--help" {
             println!("{}", HELP_MSG);
@@ -57,8 +62,12 @@ The output file is a image fiile in the PPM file format.";
                     std::process::exit(0);
                 }
             }
-        } else if arg.starts_with("--without-tree") {
+        } else if arg.eq("--without-tree") {
             tracing = Tracing::Linear;
+        } else if arg.eq("--add-sphere") {
+            add_sphere = true;
+        } else if arg.eq("--console") {
+            output = Some(OutputType::Console);
         }
 
         #[cfg(feature = "windowed")]
@@ -71,18 +80,24 @@ The output file is a image fiile in the PPM file format.";
         println!("All required arguments is not provided.\n\n{}", HELP_MSG);
         std::process::exit(0);
     }
-    (source.unwrap(), output.unwrap(), tracing)
+    (source.unwrap(), output.unwrap(), tracing, add_sphere)
 }
 
 fn main() {
-    let (source, output, tracing) = parse_args();
+    let (source, output, tracing, sphere) = parse_args();
     let loader = io::obj_file::ObjectFile::new(source);
     match loader.load() {
         Err(e) => {
             println!("Failed to process object file:\n{}", e);
             std::process::exit(1);
         }
-        Ok(objects) => {
+        Ok(mut objects) => {
+            if sphere {
+                objects.push(Rc::new(RefCell::new(Sphere::new(
+                    Point::new(5., 20., 20.0),
+                    5.0,
+                ))));
+            }
             let tracer: Box<dyn ObjectContainer> = match tracing {
                 Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 100)),
                 Tracing::Linear => Box::new(ray_tracer::scene::LinearTracer::new(objects)),

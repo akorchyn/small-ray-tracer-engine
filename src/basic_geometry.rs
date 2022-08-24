@@ -23,9 +23,9 @@ pub(crate) enum Intersection {
 
 impl Intersection {
     pub(crate) fn distance(&self) -> f64 {
-        match self {
-            &Intersection::Intersect(distance) => distance,
-            &Intersection::TriangleIntesersect(distance, _, _) => distance,
+        match *self {
+            Intersection::Intersect(distance) => distance,
+            Intersection::TriangleIntesersect(distance, _, _) => distance,
         }
     }
 }

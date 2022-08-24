@@ -89,7 +89,7 @@ impl Window {
 
 impl Output for Window {
     fn dump(&mut self, buff: &[f64], width: usize, height: usize) -> Result<()> {
-        println!("{}", "Dumping...");
+        println!("Dumping...");
         let buff = buff
             .iter()
             .map(|x| {

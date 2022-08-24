@@ -10,12 +10,6 @@ pub(crate) struct Matrix<const ROW: usize, const COLUMN: usize> {
 }
 
 impl<const ROW: usize, const COLUMN: usize> Matrix<ROW, COLUMN> {
-    pub(crate) fn new() -> Self {
-        Matrix {
-            data: [[0.0; COLUMN]; ROW],
-        }
-    }
-
     pub(crate) fn with_data(data: [[f64; COLUMN]; ROW]) -> Self {
         Matrix { data }
     }

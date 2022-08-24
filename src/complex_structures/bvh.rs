@@ -7,8 +7,7 @@ use std::{
 
 use crate::{
     basic_geometry::{
-        alighned_box::AlighnedBox, point::Point, ray::Ray, vector::Vector, Axis, Intersect,
-        Intersection,
+        alighned_box::AlighnedBox, point::Point, ray::Ray, Axis, Intersect, Intersection,
     },
     io::Input,
     ray_tracer::{ObjectContainer, RayTracable},
@@ -19,7 +18,6 @@ struct BVHNode {
     bounding_box: AlighnedBox,
     left: Option<usize>,
     right: Option<usize>,
-    split_axis: Option<Axis>,
     start: usize,
     end: usize,
 }
@@ -44,11 +42,11 @@ impl ObjectContainer for BVHTree {
         let mut intersections = Vec::new();
         while let Some(node_index) = queue.pop_front() {
             let node = &self.nodes[node_index];
-            if node.bounding_box.intersect(&ray).is_some() {
+            if node.bounding_box.intersect(ray).is_some() {
                 if node.end != node.start {
                     for i in node.start..node.end {
                         let object = &self.data[i];
-                        if let Some(intersection) = object.borrow().intersect(&ray) {
+                        if let Some(intersection) = object.borrow().intersect(ray) {
                             intersections.push((i, intersection));
                         }
                     }
@@ -130,8 +128,8 @@ impl BVHTree {
         if n == 1 {
             let index = self.nodes.len();
             let node = BVHNode::new(index, bound, objects.len(), objects.len() + n);
-            for i in start..end {
-                objects.push(self.data[info[i].index].clone());
+            for info in info.iter().take(end).skip(start) {
+                objects.push(self.data[info.index].clone());
             }
             self.nodes.push(node);
             Some(index)
@@ -144,81 +142,76 @@ impl BVHTree {
             if centroid_box.min[axis] == centroid_box.max[axis] {
                 let index = self.nodes.len();
                 let node = BVHNode::new(index, bound, objects.len(), objects.len() + n);
-                for i in start..end {
-                    objects.push(self.data[info[i].index].clone());
+                for info in info.iter().take(end).skip(start) {
+                    objects.push(self.data[info.index].clone());
                 }
                 self.nodes.push(node);
                 return Some(index);
+            } else if n <= 4 {
+                info.as_mut_slice()[start..end]
+                    .sort_by(|a, b| a.position[axis].total_cmp(&b.position[axis]));
             } else {
-                if n <= 4 {
-                    info.as_mut_slice()[start..end]
-                        .sort_by(|a, b| a.position[axis].total_cmp(&b.position[axis]));
-                } else {
-                    const N: usize = 12;
-                    #[derive(Copy, Clone)]
-                    struct Bucket {
-                        count: usize,
-                        bound: AlighnedBox,
-                    }
-                    let mut buckets: [Bucket; N] = [Bucket {
-                        count: 0,
-                        bound: AlighnedBox::default(),
-                    }; N];
+                const N: usize = 12;
+                #[derive(Copy, Clone)]
+                struct Bucket {
+                    count: usize,
+                    bound: AlighnedBox,
+                }
+                let mut buckets: [Bucket; N] = [Bucket {
+                    count: 0,
+                    bound: AlighnedBox::default(),
+                }; N];
 
-                    for info in info[start..end].iter() {
-                        let bucket_index =
-                            calculate_index(&centroid_box, info.position, axis, N - 1);
-                        let bucket = &mut buckets[bucket_index];
-                        bucket.count += 1;
-                        bucket.bound = bucket.bound.union(&info.bounding_box);
-                    }
+                for info in info[start..end].iter() {
+                    let bucket_index = calculate_index(&centroid_box, info.position, axis, N - 1);
+                    let bucket = &mut buckets[bucket_index];
+                    bucket.count += 1;
+                    bucket.bound = bucket.bound.union(&info.bounding_box);
+                }
 
-                    let mut cost = [0.0; N - 1];
-                    cost.iter_mut().enumerate().for_each(|(i, c)| {
-                        let mut b0 = AlighnedBox::default();
-                        let mut b1 = AlighnedBox::default();
-                        let mut count = 0;
-                        let mut count1 = 0;
-                        for j in 0..=i {
-                            b0 = b0.union(&buckets[j].bound);
-                            count += buckets[j].count;
-                        }
-                        for j in i + 1..N {
-                            b1 = b1.union(&buckets[j].bound);
-                            count1 += buckets[j].count;
-                        }
-                        *c = (b0.surface_area() * (count as f64)
-                            + b1.surface_area() * (count1 as f64))
-                            / bound.surface_area()
-                            + 0.125;
+                let mut cost = [0.0; N - 1];
+                cost.iter_mut().enumerate().for_each(|(i, c)| {
+                    let mut b0 = AlighnedBox::default();
+                    let mut b1 = AlighnedBox::default();
+                    let mut count = 0;
+                    let mut count1 = 0;
+                    for bucket in buckets.iter().take(i + 1) {
+                        b0 = b0.union(&bucket.bound);
+                        count += bucket.count;
+                    }
+                    for bucket in buckets.iter().take(N).skip(i + 1) {
+                        b1 = b1.union(&bucket.bound);
+                        count1 += bucket.count;
+                    }
+                    *c = (b0.surface_area() * (count as f64) + b1.surface_area() * (count1 as f64))
+                        / bound.surface_area()
+                        + 0.125;
+                });
+                let (min_bucket, min_cost) = cost
+                    .into_iter()
+                    .enumerate()
+                    .min_by(|&(_, c0), (_, c1)| c0.total_cmp(c1))
+                    .unwrap();
+                let leaf_cost = n as f64;
+                if n > self.max_primitives_in_node || min_cost < leaf_cost {
+                    info.as_mut_slice()[start..end].sort_by(|a, b| {
+                        let index: usize = calculate_index(&centroid_box, a.position, axis, N - 1);
+                        let result1 = index <= min_bucket;
+                        let index2 = calculate_index(&centroid_box, b.position, axis, N - 1);
+                        let result2 = index2 <= min_bucket;
+                        result1.cmp(&result2)
                     });
-                    let (min_bucket, min_cost) = cost
-                        .into_iter()
-                        .enumerate()
-                        .min_by(|&(_, c0), (_, c1)| c0.total_cmp(c1))
-                        .unwrap();
-                    let leaf_cost = n as f64;
-                    if n > self.max_primitives_in_node || min_cost < leaf_cost {
-                        info.as_mut_slice()[start..end].sort_by(|a, b| {
-                            let index: usize =
-                                calculate_index(&centroid_box, a.position, axis, N - 1);
-                            let result1 = index <= min_bucket;
-                            let index2 = calculate_index(&centroid_box, b.position, axis, N - 1);
-                            let result2 = index2 <= min_bucket;
-                            result1.cmp(&result2)
-                        });
-                        mid = info.as_slice()[start..end].partition_point(|a| {
-                            calculate_index(&centroid_box, a.position, axis, N - 1) > min_bucket
-                        }) + start;
-                    } else {
-                        let index = self.nodes.len();
-                        let node = BVHNode::new(index, bound, objects.len(), objects.len() + n);
-                        for i in start..end {
-                            objects.push(self.data[info[i].index].clone());
-                        }
-                        self.nodes.push(node);
-                        return Some(index);
+                    mid = info.as_slice()[start..end].partition_point(|a| {
+                        calculate_index(&centroid_box, a.position, axis, N - 1) > min_bucket
+                    }) + start;
+                } else {
+                    let index = self.nodes.len();
+                    let node = BVHNode::new(index, bound, objects.len(), objects.len() + n);
+                    for item in info.iter().take(end).skip(start) {
+                        objects.push(self.data[item.index].clone());
                     }
+                    self.nodes.push(node);
+                    return Some(index);
                 }
             }
             let left = self.recursive_build(info, max_primitives_in_node, objects, start, mid);
@@ -227,7 +220,6 @@ impl BVHTree {
             let node = BVHNode::from_childrens(
                 &self.nodes[left.unwrap()],
                 &self.nodes[right.unwrap()],
-                axis,
                 index,
             );
             self.nodes.push(node);
@@ -264,19 +256,17 @@ impl BVHNode {
             bounding_box,
             left: None,
             right: None,
-            split_axis: None,
             start,
             end,
         }
     }
 
-    fn from_childrens(left: &BVHNode, right: &BVHNode, axis: Axis, index: usize) -> BVHNode {
+    fn from_childrens(left: &BVHNode, right: &BVHNode, index: usize) -> BVHNode {
         BVHNode {
             index,
             bounding_box: left.bounding_box.union(&right.bounding_box),
             left: Some(left.index),
             right: Some(right.index),
-            split_axis: Some(axis),
             start: 0,
             end: 0,
         }

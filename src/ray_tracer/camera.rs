@@ -46,7 +46,7 @@ impl Camera {
             Transformation::Rotation(Axis::Y, self.rotation_angles.y).transformation_to_matrix();
         let z =
             Transformation::Rotation(Axis::Z, self.rotation_angles.z).transformation_to_matrix();
-        let direction = (z * (y * (x * Vector::from(direction)))).normalize();
+        let direction = (z * (y * (x * direction))).normalize();
         Ray::new(position, direction)
     }
 }
