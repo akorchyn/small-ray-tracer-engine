@@ -96,7 +96,7 @@ impl NormalAtPoint for Triangle {
         match intersection {
             Intersection::TriangleIntesersect(_, u, v) => {
                 if self.normal_at_point {
-                    (self.na * u + self.nb * v + self.nc * (1.0 - u - v)).normalize()
+                    (self.nb * u + self.nc * v + self.na * (1.0 - u - v)).normalize()
                 } else {
                     self.na
                 }
