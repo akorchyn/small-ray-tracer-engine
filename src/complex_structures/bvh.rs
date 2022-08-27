@@ -9,8 +9,9 @@ use crate::{
     basic_geometry::{
         alighned_box::AlighnedBox, point::Point, ray::Ray, Axis, Intersect, Intersection,
     },
+    complex_structures::BoundingBox,
     io::Input,
-    ray_tracer::{ObjectContainer, RayTracable},
+    ray_tracer::{object::Object, ObjectContainer, RayTracable},
 };
 
 struct BVHNode {
@@ -23,7 +24,7 @@ struct BVHNode {
 }
 
 pub(crate) struct BVHTree {
-    data: Vec<Rc<RefCell<dyn RayTracable>>>,
+    data: Vec<Object>,
     nodes: Vec<BVHNode>,
     max_primitives_in_node: usize,
     root: Option<usize>,
@@ -46,7 +47,7 @@ impl ObjectContainer for BVHTree {
                 if node.end != node.start {
                     for i in node.start..node.end {
                         let object = &self.data[i];
-                        if let Some(intersection) = object.borrow().intersect(ray) {
+                        if let Some(intersection) = object.intersect(ray) {
                             intersections.push((i, intersection));
                         }
                     }
@@ -66,8 +67,8 @@ impl ObjectContainer for BVHTree {
             .min_by(|&(_, a), (_, b)| a.distance().total_cmp(&b.distance()))
     }
 
-    fn object_by_index(&self, index: usize) -> Ref<dyn RayTracable> {
-        self.data[index].borrow()
+    fn object_by_index(&self, index: usize) -> &Object {
+        &self.data[index]
     }
 }
 
@@ -77,15 +78,12 @@ impl BVHTree {
         Ok(Self::new(loader.load()?, 1))
     }
 
-    pub(crate) fn new(
-        objects: Vec<Rc<RefCell<dyn RayTracable>>>,
-        max_primitives_in_node: usize,
-    ) -> BVHTree {
+    pub(crate) fn new(objects: Vec<Object>, max_primitives_in_node: usize) -> BVHTree {
         println!("Building BVH tree...");
         let mut info: Vec<_> = objects
             .iter()
             .enumerate()
-            .map(|(i, o)| BVHObjectInfo::new(i, o.borrow().bounding_box()))
+            .map(|(i, o)| BVHObjectInfo::new(i, o.bounding_box()))
             .collect();
 
         let mut root = BVHTree {
@@ -112,7 +110,7 @@ impl BVHTree {
         &mut self,
         info: &mut Vec<BVHObjectInfo>,
         max_primitives_in_node: usize,
-        objects: &mut Vec<Rc<RefCell<dyn RayTracable>>>,
+        objects: &mut Vec<Object>,
         start: usize,
         end: usize,
     ) -> Option<usize> {

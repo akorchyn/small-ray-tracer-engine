@@ -8,11 +8,16 @@ use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::rc::Rc;
 
+use basic_geometry::alighned_box::AlighnedBox;
+use basic_geometry::normal::Normal;
+use basic_geometry::plane::Plane;
 use basic_geometry::point::Point;
 use basic_geometry::sphere::Sphere;
 use io::Input;
 use ray_tracer::camera::Camera;
+use ray_tracer::color::Color;
 use ray_tracer::light::Light;
+use ray_tracer::object::Object;
 use ray_tracer::scene::{Scene, Tracing};
 use ray_tracer::viewframe::ViewFrame;
 use ray_tracer::{ObjectContainer, RayTracer};
@@ -93,17 +98,31 @@ fn main() {
         }
         Ok(mut objects) => {
             if sphere {
-                objects.push(Rc::new(RefCell::new(Sphere::new(
-                    Point::new(5., 20., 20.0),
-                    5.0,
-                ))));
+                objects.push(Object::reflection(
+                    Rc::new(RefCell::new(Sphere::new(Point::new(20., 20., 20.0), 5.0))),
+                    0.3,
+                ));
+                // objects.push(Object::lambert(Rc::new(RefCell::new(AlighnedBox::new(
+                //     Point::new(-100., -100.0, -100.0),
+                //     Point::new(100.0, -100.0, 100.0),
+                // )))));
             }
             let tracer: Box<dyn ObjectContainer> = match tracing {
-                Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 100)),
+                Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 1)),
                 Tracing::Linear => Box::new(ray_tracer::scene::LinearTracer::new(objects)),
             };
             let mut scene = Scene::new(tracer);
-            scene.add_light(Light::new(Point::new(0.0, 100.0, 100.0)));
+            scene.add_light(Light::Point(
+                Point::new(0.0, 100.0, 100.0),
+                Color::white(),
+                0.7,
+            ));
+            scene.add_light(Light::Environment(Color::red(), 0.15));
+            scene.add_light(Light::Directed(
+                Normal::new(-1., 0., 0.),
+                Color::blue(),
+                0.15,
+            ));
 
             let viewframe = ViewFrame::new(Point::new(0.0, 0.0, 250.0), 25.0, 25.0);
             let camera = Camera::new(Point::new(0.0, 0.0, 275.0), viewframe);

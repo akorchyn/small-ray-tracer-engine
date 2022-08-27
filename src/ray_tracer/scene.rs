@@ -3,21 +3,21 @@ use std::io::Result;
 use std::path::PathBuf;
 use std::rc::Rc;
 
+use super::object::Object;
 use super::ObjectContainer;
 use crate::basic_geometry::ray::Ray;
-use crate::basic_geometry::Intersection;
+use crate::basic_geometry::{Intersect, Intersection};
 use crate::complex_structures::bvh::BVHTree;
 use crate::io::Input;
 
 use super::light::Light;
-use super::RayTracable;
 
 pub(crate) struct LinearTracer {
-    objects: Vec<Rc<RefCell<dyn RayTracable>>>,
+    objects: Vec<Object>,
 }
 
 impl LinearTracer {
-    pub(crate) fn new(objects: Vec<Rc<RefCell<dyn RayTracable>>>) -> LinearTracer {
+    pub(crate) fn new(objects: Vec<Object>) -> LinearTracer {
         LinearTracer { objects }
     }
 
@@ -32,17 +32,12 @@ impl ObjectContainer for LinearTracer {
         self.objects
             .iter()
             .enumerate()
-            .flat_map(|(i, object)| {
-                object
-                    .borrow()
-                    .intersect(ray)
-                    .map(|intersection| (i, intersection))
-            })
+            .flat_map(|(i, object)| object.intersect(ray).map(|intersection| (i, intersection)))
             .min_by(|&(_, a), &(_, b)| a.distance().total_cmp(&b.distance()))
     }
 
-    fn object_by_index(&self, index: usize) -> Ref<dyn RayTracable> {
-        self.objects[index].borrow()
+    fn object_by_index(&self, index: usize) -> &Object {
+        &self.objects[index]
     }
 }
 

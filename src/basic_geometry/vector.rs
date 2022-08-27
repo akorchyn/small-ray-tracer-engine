@@ -41,6 +41,13 @@ impl Vector {
         }
         Normal::new(self.x / length, self.y / length, self.z / length)
     }
+
+    pub(crate) fn inverse(&self) -> Vector {
+        let x = 1. / self.x;
+        let y = 1. / self.y;
+        let z = 1. / self.z;
+        Vector::new(x, y, z)
+    }
 }
 
 impl Mul for Vector {

@@ -3,7 +3,7 @@ use std::io::Result;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use crate::ray_tracer::{RayTracable, RayTracer};
+use crate::ray_tracer::{color::Color, object::Object, RayTracable, RayTracer};
 
 pub(crate) mod console;
 pub(crate) mod obj_file;
@@ -31,9 +31,9 @@ impl OutputType {
 
 pub(crate) trait Output {
     fn process(&mut self, ray_tracer: RayTracer) -> Result<()>;
-    fn dump(&mut self, buff: &[f64], width: usize, height: usize) -> Result<()>;
+    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> Result<()>;
 }
 
 pub(crate) trait Input {
-    fn load(&self) -> Result<Vec<Rc<RefCell<dyn RayTracable>>>>;
+    fn load(&self) -> Result<Vec<Object>>;
 }

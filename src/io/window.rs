@@ -1,6 +1,6 @@
 use crate::{
     basic_geometry::{vector::Vector, Axis, Transformation},
-    ray_tracer::RayTracer,
+    ray_tracer::{color::Color, RayTracer},
 };
 
 use super::Output;
@@ -88,18 +88,10 @@ impl Window {
 }
 
 impl Output for Window {
-    fn dump(&mut self, buff: &[f64], width: usize, height: usize) -> Result<()> {
-        println!("Dumping...");
+    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> Result<()> {
         let buff = buff
             .iter()
-            .map(|x| {
-                let color = (x * 255.0) as u32;
-                if *x == -1.0 {
-                    45u32 << 16 | 100u32 << 8
-                } else {
-                    color << 16 | color << 8 | color
-                }
-            })
+            .map(|&Color { r, g, b }| (r as u32) << 16 | (g as u32) << 8 | b as u32)
             .collect::<Vec<_>>();
         self.window
             .update_with_buffer(&buff, width, height)

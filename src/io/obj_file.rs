@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     basic_geometry::{normal::Normal, point::Point, triangle::Triangle, vector::Vector},
-    ray_tracer::RayTracable,
+    ray_tracer::{object::Object, RayTracable},
 };
 
 use super::Input;
@@ -23,7 +23,7 @@ impl ObjectFile {
 }
 
 impl Input for ObjectFile {
-    fn load(&self) -> Result<Vec<Rc<RefCell<dyn RayTracable>>>> {
+    fn load(&self) -> Result<Vec<Object>> {
         let file = std::fs::File::open(&self.path)?;
         let reader = std::io::BufReader::new(file);
         let mut result: Vec<Rc<RefCell<dyn RayTracable>>> = vec![];
@@ -91,7 +91,7 @@ impl Input for ObjectFile {
         }
         println!("Loaded {} objects", result.len());
 
-        return Ok(result);
+        return Ok(result.into_iter().map(Object::lambert).collect());
 
         fn process_point(line: &str) -> (usize, Option<usize>) {
             let mut iter = line.split('/');

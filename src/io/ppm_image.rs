@@ -5,6 +5,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use crate::io::Output;
+use crate::ray_tracer::color::Color;
 
 pub(crate) struct PPMImage {
     file_path: PathBuf,
@@ -29,20 +30,15 @@ impl PPMImage {
 }
 
 impl Output for PPMImage {
-    fn dump(&mut self, buff: &[f64], width: usize, height: usize) -> Result<()> {
+    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> Result<()> {
         let stream = File::create(&self.file_path)?;
         let mut stream = BufWriter::new(stream);
         self.write_header(width, height, &mut stream)?;
         for y in 0..height {
             for x in 0..width {
                 let index = y * width + x;
-                let intensity = buff[index];
-                if intensity == -1.0 {
-                    stream.write_all(&[45, 100, 0])?;
-                } else {
-                    let r = (intensity * 255.0) as u8;
-                    stream.write_all(&[r, r, r])?;
-                }
+                let color = buff[index];
+                stream.write_all(&[color.r, color.g, color.b])?;
             }
         }
 
