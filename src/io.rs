@@ -3,6 +3,8 @@ use std::io::Result;
 use std::path::PathBuf;
 use std::rc::Rc;
 
+use tobj::Material;
+
 use crate::ray_tracer::{color::Color, object::Object, RayTracable, RayTracer};
 
 pub(crate) mod console;
@@ -30,10 +32,10 @@ impl OutputType {
 }
 
 pub(crate) trait Output {
-    fn process(&mut self, ray_tracer: RayTracer) -> Result<()>;
-    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> Result<()>;
+    fn process(&mut self, ray_tracer: RayTracer) -> anyhow::Result<()>;
+    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> anyhow::Result<()>;
 }
 
 pub(crate) trait Input {
-    fn load(&self) -> Result<Vec<Object>>;
+    fn load(&self) -> anyhow::Result<(Vec<Object>, Vec<Material>)>;
 }

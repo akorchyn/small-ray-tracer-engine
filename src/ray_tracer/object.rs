@@ -5,27 +5,19 @@ use crate::{
     complex_structures::BoundingBox,
 };
 
-use super::{texture::Texture, RayTracable};
+use super::RayTracable;
 
 #[derive(Clone)]
 pub(crate) struct Object {
     geometry: Rc<RefCell<dyn RayTracable>>,
-    pub(crate) texture: Texture,
+    pub(crate) material_id: usize,
 }
 
 impl Object {
-    pub(crate) fn lambert(geometry: Rc<RefCell<dyn RayTracable>>) -> Self {
+    pub(crate) fn new(geometry: Rc<RefCell<dyn RayTracable>>, material_id: usize) -> Self {
         Self {
             geometry,
-            texture: Texture::Lambert,
-        }
-    }
-
-    pub(crate) fn reflection(geometry: Rc<RefCell<dyn RayTracable>>, coof: f64) -> Self {
-        assert!(0.0 <= coof && coof <= 1.);
-        Self {
-            geometry,
-            texture: Texture::Reflection(coof),
+            material_id,
         }
     }
 }

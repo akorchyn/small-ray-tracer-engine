@@ -30,7 +30,7 @@ impl PPMImage {
 }
 
 impl Output for PPMImage {
-    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> Result<()> {
+    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> anyhow::Result<()> {
         let stream = File::create(&self.file_path)?;
         let mut stream = BufWriter::new(stream);
         self.write_header(width, height, &mut stream)?;
@@ -45,7 +45,7 @@ impl Output for PPMImage {
         Ok(())
     }
 
-    fn process(&mut self, ray_tracer: crate::ray_tracer::RayTracer) -> Result<()> {
-        ray_tracer.render(self)
+    fn process(&mut self, mut ray_tracer: crate::ray_tracer::RayTracer) -> anyhow::Result<()> {
+        Ok(ray_tracer.render(self)?)
     }
 }

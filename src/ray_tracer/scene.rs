@@ -3,6 +3,8 @@ use std::io::Result;
 use std::path::PathBuf;
 use std::rc::Rc;
 
+use tobj::Material;
+
 use super::object::Object;
 use super::ObjectContainer;
 use crate::basic_geometry::ray::Ray;
@@ -21,9 +23,10 @@ impl LinearTracer {
         LinearTracer { objects }
     }
 
-    pub(crate) fn from_obj_file(path: PathBuf) -> Result<LinearTracer> {
+    pub(crate) fn from_obj_file(path: PathBuf) -> anyhow::Result<(LinearTracer, Vec<Material>)> {
         let loader = crate::io::obj_file::ObjectFile::new(path);
-        Ok(LinearTracer::new(loader.load()?))
+        let (objects, materials) = loader.load()?;
+        Ok((LinearTracer::new(objects), materials))
     }
 }
 
@@ -48,26 +51,35 @@ pub(crate) enum Tracing {
 
 pub(crate) struct Scene {
     objects: Box<dyn ObjectContainer>,
+    materials: Vec<Material>,
     lights: Vec<Light>,
 }
 
 impl Scene {
-    pub(crate) fn new(objects: Box<dyn ObjectContainer>) -> Scene {
+    pub(crate) fn new(objects: Box<dyn ObjectContainer>, materials: Vec<Material>) -> Scene {
         Scene {
             objects,
             lights: Vec::new(),
+            materials,
         }
     }
 
-    pub(crate) fn from_obj_file(path: PathBuf, t: Tracing) -> Result<Scene> {
-        let tracer: Box<dyn ObjectContainer> = match t {
-            Tracing::Linear => Box::new(LinearTracer::from_obj_file(path)?),
-            Tracing::BVH => Box::new(BVHTree::from_obj_file(path)?),
+    pub(crate) fn from_obj_file(path: PathBuf, t: Tracing) -> anyhow::Result<Scene> {
+        let (container, materials): (Box<dyn ObjectContainer>, Vec<Material>) = match t {
+            Tracing::Linear => {
+                let (container, materials) = LinearTracer::from_obj_file(path)?;
+                (Box::new(container), materials)
+            }
+            Tracing::BVH => {
+                let (container, materials) = BVHTree::from_obj_file(path)?;
+                (Box::new(container), materials)
+            }
         };
 
         Ok(Scene {
-            objects: tracer,
+            objects: container,
             lights: Vec::new(),
+            materials,
         })
     }
 
@@ -81,5 +93,9 @@ impl Scene {
 
     pub(crate) fn objects(&self) -> &dyn ObjectContainer {
         self.objects.as_ref()
+    }
+
+    pub(crate) fn materials(&self, id: usize) -> &Material {
+        &self.materials[id]
     }
 }

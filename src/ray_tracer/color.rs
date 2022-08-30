@@ -56,6 +56,18 @@ impl Mul<f64> for Color {
     }
 }
 
+impl Mul<[f32; 3]> for Color {
+    type Output = Color;
+
+    fn mul(self, coof: [f32; 3]) -> Self::Output {
+        Color::new(
+            ((self.r as f64) * coof[0] as f64) as u8,
+            ((self.g as f64) * coof[1] as f64) as u8,
+            ((self.b as f64) * coof[2] as f64) as u8,
+        )
+    }
+}
+
 impl Sum for Color {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Color::black(), |a, b| a + b)

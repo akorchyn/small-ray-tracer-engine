@@ -1,9 +1,12 @@
 use std::{
     cell::RefCell,
-    io::{BufRead, Result},
+    fs::File,
+    io::{BufRead, BufReader, Result},
     path::PathBuf,
     rc::Rc,
 };
+
+use tobj::{Material, Model};
 
 use crate::{
     basic_geometry::{normal::Normal, point::Point, triangle::Triangle, vector::Vector},
@@ -23,97 +26,74 @@ impl ObjectFile {
 }
 
 impl Input for ObjectFile {
-    fn load(&self) -> Result<Vec<Object>> {
-        let file = std::fs::File::open(&self.path)?;
-        let reader = std::io::BufReader::new(file);
-        let mut result: Vec<Rc<RefCell<dyn RayTracable>>> = vec![];
-        let mut points = vec![];
-        let mut normals = vec![];
-        let mut input_vector = vec![];
+    fn load(&self) -> anyhow::Result<(Vec<Object>, Vec<Material>)> {
+        let (models, materials) = tobj::load_obj(
+            &self.path,
+            &tobj::LoadOptions {
+                triangulate: true,
+                ignore_lines: true,
+                ignore_points: true,
+                single_index: true,
+                ..Default::default()
+            },
+        )?;
 
-        println!("Loading data from obj file...");
-        for (i, l) in reader.lines().enumerate() {
-            let l = l?;
-            let mut iterator = l.split_whitespace();
+        let mut materials = materials?;
+        let lambert_id = materials.len();
+        materials.push(Material {
+            ambient: [0.2, 0.2, 0.2],
+            diffuse: [0.8, 0.8, 0.8],
+            specular: [1.0, 1.0, 1.0],
+            shininess: 100.,
+            ..Default::default()
+        });
 
-            match iterator.next() {
-                Some("v") => {
-                    let x = iterator.next().unwrap().parse::<f64>().unwrap();
-                    let y = iterator.next().unwrap().parse::<f64>().unwrap();
-                    let z = iterator.next().unwrap().parse::<f64>().unwrap();
-                    points.push(Point::new(x, y, z));
+        let data = models
+            .into_iter()
+            .flat_map(|model| {
+                let size = model.mesh.indices.len() / 3;
+                let mut result = vec![];
+                result.reserve(size);
+                for i in 0..size {
+                    let i = 3 * i;
+                    let (i1, i2, i3) = (
+                        model.mesh.indices[i] as usize,
+                        model.mesh.indices[i + 1] as usize,
+                        model.mesh.indices[i + 2] as usize,
+                    );
+
+                    let texture_id = model.mesh.material_id.unwrap_or(lambert_id);
+
+                    let (point1, point2, point3) = (
+                        get_point(&model.mesh.positions[i1 * 3..]),
+                        get_point(&model.mesh.positions[i2 * 3..]),
+                        get_point(&model.mesh.positions[i3 * 3..]),
+                    );
+                    let triangle = if let Some(_) = model.mesh.normals.get(i1 * 3) {
+                        Triangle::with_normals(
+                            point1,
+                            get_normal(&model.mesh.normals[i1 * 3..]),
+                            point2,
+                            get_normal(&model.mesh.normals[i2 * 3..]),
+                            point3,
+                            get_normal(&model.mesh.normals[i3 * 3..]),
+                        )
+                    } else {
+                        Triangle::new(point1, point2, point3)
+                    };
+                    result.push(Object::new(Rc::new(RefCell::new(triangle)), texture_id));
                 }
-                Some("vn") => {
-                    let x = iterator.next().unwrap().parse::<f64>().unwrap();
-                    let y = iterator.next().unwrap().parse::<f64>().unwrap();
-                    let z = iterator.next().unwrap().parse::<f64>().unwrap();
-                    normals.push(Vector::new(x, y, z).normalize());
-                }
-                Some("f") => {
-                    if points.len() < 3 {
-                        panic!("Not enough points to make a triangle");
-                    }
-                    input_vector.clear();
-                    for point in iterator {
-                        if !point.contains('/') {
-                            let point_index = point.parse::<usize>().unwrap();
-                            input_vector.push((points[point_index - 1], None));
-                        } else {
-                            let (p1, n1) = process_point(point);
-                            let data = if let Some(n2) = n1 {
-                                (points[p1 - 1], Some(normals[n2 - 1]))
-                            } else {
-                                (points[p1 - 1], None)
-                            };
-                            input_vector.push(data);
-                        }
-                    }
-
-                    match input_vector.len() {
-                        3 => {
-                            let triangle = get_triangle(&input_vector[..3]);
-                            result.push(Rc::new(RefCell::new(triangle)));
-                        }
-                        4 => {
-                            let triangle = get_triangle(&input_vector[..3]);
-                            result.push(Rc::new(RefCell::new(triangle)));
-                            input_vector.remove(1);
-                            let triangle = get_triangle(&input_vector[..3]);
-                            result.push(Rc::new(RefCell::new(triangle)));
-                        }
-                        _ => {
-                            panic!("Currently only triangles and squares are supported, but received {} points at line {}", input_vector.len(), i + 1);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-        println!("Loaded {} objects", result.len());
-
-        return Ok(result.into_iter().map(Object::lambert).collect());
-
-        fn process_point(line: &str) -> (usize, Option<usize>) {
-            let mut iter = line.split('/');
-            (
-                iter.next().unwrap().parse::<usize>().unwrap(),
-                iter.nth(1).map(|i| i.parse::<usize>().unwrap()),
-            )
-        }
-
-        fn get_triangle(data: &[(Point, Option<Normal>)]) -> Triangle {
-            if data[0].1.is_some() {
-                Triangle::with_normals(
-                    data[0].0,
-                    data[0].1.unwrap(),
-                    data[1].0,
-                    data[1].1.unwrap(),
-                    data[2].0,
-                    data[2].1.unwrap(),
-                )
-            } else {
-                Triangle::new(data[0].0, data[1].0, data[2].0)
-            }
-        }
+                result
+            })
+            .collect::<Vec<_>>();
+        Ok((data, materials))
     }
+}
+
+fn get_point(slice: &[f32]) -> Point {
+    Point::new(slice[0] as f64, slice[1] as f64, slice[2] as f64)
+}
+
+fn get_normal(slice: &[f32]) -> Normal {
+    Normal::new(slice[0] as f64, slice[1] as f64, slice[2] as f64)
 }

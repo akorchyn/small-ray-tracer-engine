@@ -5,6 +5,8 @@ use std::{
     rc::Rc,
 };
 
+use tobj::Material;
+
 use crate::{
     basic_geometry::{
         alighned_box::AlighnedBox, point::Point, ray::Ray, Axis, Intersect, Intersection,
@@ -73,9 +75,10 @@ impl ObjectContainer for BVHTree {
 }
 
 impl BVHTree {
-    pub(crate) fn from_obj_file(path: PathBuf) -> std::io::Result<BVHTree> {
+    pub(crate) fn from_obj_file(path: PathBuf) -> anyhow::Result<(BVHTree, Vec<Material>)> {
         let loader = crate::io::obj_file::ObjectFile::new(path);
-        Ok(Self::new(loader.load()?, 1))
+        let (objects, material) = loader.load()?;
+        Ok((Self::new(objects, 1), material))
     }
 
     pub(crate) fn new(objects: Vec<Object>, max_primitives_in_node: usize) -> BVHTree {

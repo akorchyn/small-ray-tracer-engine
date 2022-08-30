@@ -88,7 +88,7 @@ impl Window {
 }
 
 impl Output for Window {
-    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> Result<()> {
+    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> anyhow::Result<()> {
         let buff = buff
             .iter()
             .map(|&Color { r, g, b }| (r as u32) << 16 | (g as u32) << 8 | b as u32)
@@ -99,7 +99,7 @@ impl Output for Window {
         Ok(())
     }
 
-    fn process(&mut self, mut ray_tracer: RayTracer) -> Result<()> {
+    fn process(&mut self, mut ray_tracer: RayTracer) -> anyhow::Result<()> {
         ray_tracer.render(self)?;
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
             if self.handle_events(&mut ray_tracer) {

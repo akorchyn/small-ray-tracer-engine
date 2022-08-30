@@ -1,6 +1,8 @@
 use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
 
+use super::vector::Vector;
+
 #[derive(Debug)]
 pub(crate) struct Ray {
     pub(crate) origin: Point,
@@ -14,5 +16,11 @@ impl Ray {
 
     pub(crate) fn at(&self, t: f64) -> Point {
         self.origin + self.direction * t
+    }
+
+    pub(crate) fn reflect_from_normal(&self, point: Point, normal: Normal) -> Self {
+        let dir = Normal::reflect(normal, self.direction);
+        let ray = Ray::new(point, dir);
+        Ray::new(ray.at(1e-4), ray.direction)
     }
 }

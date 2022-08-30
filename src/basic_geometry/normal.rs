@@ -24,6 +24,12 @@ impl Normal {
     pub(crate) fn dot(&self, other: Normal) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
+
+    pub(crate) fn reflect(normal: Normal, direction: Normal) -> Self {
+        let normal = Vector::from(normal);
+        let dir = Vector::from(direction);
+        (dir - normal * -2. * dir.dot(normal)).normalize()
+    }
 }
 
 impl Mul<f64> for Normal {

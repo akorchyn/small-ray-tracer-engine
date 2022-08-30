@@ -96,22 +96,18 @@ fn main() {
             println!("Failed to process object file:\n{}", e);
             std::process::exit(1);
         }
-        Ok(mut objects) => {
+        Ok((mut objects, materials)) => {
             if sphere {
-                objects.push(Object::reflection(
-                    Rc::new(RefCell::new(Sphere::new(Point::new(20., 20., 20.0), 5.0))),
-                    0.3,
+                objects.push(Object::new(
+                    Rc::new(RefCell::new(Sphere::new(Point::new(20., 20., 20.0), 50.0))),
+                    materials.len() - 1,
                 ));
-                // objects.push(Object::lambert(Rc::new(RefCell::new(AlighnedBox::new(
-                //     Point::new(-100., -100.0, -100.0),
-                //     Point::new(100.0, -100.0, 100.0),
-                // )))));
             }
             let tracer: Box<dyn ObjectContainer> = match tracing {
                 Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 1)),
                 Tracing::Linear => Box::new(ray_tracer::scene::LinearTracer::new(objects)),
             };
-            let mut scene = Scene::new(tracer);
+            let mut scene = Scene::new(tracer, materials);
             scene.add_light(Light::Point(
                 Point::new(0.0, 100.0, 100.0),
                 Color::white(),
