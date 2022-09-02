@@ -37,7 +37,7 @@ Optional arguments:
 
     let mut source: Option<PathBuf> = None;
     let mut output: Option<OutputType> = None;
-    let mut tracing = Tracing::BVH;
+    let mut tracing = Tracing::Bvh;
     let mut add_sphere = false;
     for arg in std::env::args() {
         if arg == "--help" {
@@ -110,7 +110,7 @@ fn main() {
             // });
 
             let tracer: Box<dyn ObjectContainer> = match tracing {
-                Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 1)),
+                Tracing::Bvh => Box::new(complex_structures::bvh::BVHTree::new(objects, 1)),
                 Tracing::Linear => Box::new(ray_tracer::scene::LinearTracer::new(objects)),
             };
             let mut scene = Scene::new(tracer, materials);

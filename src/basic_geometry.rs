@@ -45,7 +45,7 @@ pub(crate) enum Axis {
     Z,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub(crate) enum Transformation {
     Translation(Vector),
     Rotation(Axis, f64),

@@ -1,8 +1,6 @@
 use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
 
-use super::vector::Vector;
-
 #[derive(Debug)]
 pub(crate) struct Ray {
     pub(crate) origin: Point,

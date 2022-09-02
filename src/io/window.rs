@@ -1,10 +1,8 @@
+use super::Output;
 use crate::{
     basic_geometry::{vector::Vector, Axis, Transformation},
     ray_tracer::{color::Color, RayTracer},
 };
-
-use super::Output;
-use std::io::Result;
 
 use minifb::{Key, Window as WindowHandler, WindowOptions};
 

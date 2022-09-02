@@ -4,7 +4,6 @@ pub(crate) mod light;
 pub(crate) mod material;
 pub(crate) mod object;
 pub(crate) mod scene;
-pub(crate) mod texture_loader;
 pub(crate) mod viewframe;
 
 use camera::Camera;
@@ -27,7 +26,6 @@ use object::Object;
 
 use self::color::Color;
 use self::light::Light;
-use self::texture_loader::TextureLoader;
 
 const MIRROR_RECURSION_LIMIT: u32 = 4;
 
@@ -44,7 +42,6 @@ pub(crate) trait ObjectContainer {
 
 pub(crate) struct RayTracer {
     scene: Scene,
-    texture_loader: TextureLoader,
     camera: Camera,
     width: usize,
     height: usize,
@@ -54,7 +51,6 @@ impl RayTracer {
     pub(crate) fn new(scene: Scene, camera: Camera, width: usize, height: usize) -> RayTracer {
         RayTracer {
             scene,
-            texture_loader: TextureLoader::new(),
             camera,
             width,
             height,
@@ -89,8 +85,8 @@ impl RayTracer {
             let object = self.scene.objects().object_by_index(object);
             let intersection_point = ray.at(intersection.distance());
             let normal = object.normal_at_point(&intersection_point, intersection);
-            let material = self.scene.materials(object.material_id).clone();
-            let color = self.get_color(intersection_point, normal, &material, &ray);
+            let material = self.scene.materials(object.material_id);
+            let color = self.get_color(intersection_point, normal, material, &ray);
             let color = if material.dissolve < 1.0 {
                 let ray = Ray::new(ray.at(intersection.distance() + 1e-4), ray.direction);
                 // We have to trace another object behind this one.
@@ -107,12 +103,10 @@ impl RayTracer {
             } else {
                 color
             }
+        } else if nonce > 0 {
+            Color::black()
         } else {
-            if nonce > 0 {
-                Color::black()
-            } else {
-                DEFAULT_BACKGROUND_COLOR
-            }
+            DEFAULT_BACKGROUND_COLOR
         }
     }
 
@@ -135,12 +129,12 @@ impl RayTracer {
                     ) =>
                 {
                     let light_dir = (intersection_point - point).normalize(); // In direction from Light to Intersection
-                    RayTracer::phong_color(color * coof, light_dir, normal, &ray, &material)
+                    RayTracer::phong_color(color * coof, light_dir, normal, ray, material)
                 }
                 Light::Directed(light_dir, color, coof)
                     if !self.is_shadowed(intersection_point, -light_dir) =>
                 {
-                    RayTracer::phong_color(color * coof, light_dir, normal, &ray, &material)
+                    RayTracer::phong_color(color * coof, light_dir, normal, ray, material)
                 }
                 _ => Color::black(),
             })
@@ -168,7 +162,7 @@ impl RayTracer {
                     * reflection_light
                         .dot(-ray.direction)
                         .abs()
-                        .powf(material.shininess.into())
+                        .powf(material.shininess)
                     * material.specular
             } else {
                 Color::black()

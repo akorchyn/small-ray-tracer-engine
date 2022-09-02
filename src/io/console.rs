@@ -1,12 +1,10 @@
-use std::io::{BufWriter, Result, Write};
-
 use crate::{io::Output, ray_tracer::color::Color};
 
 pub(crate) struct Console {}
 
 impl Output for Console {
-    fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> anyhow::Result<()> {
-        todo!()
+    fn dump(&mut self, _: &[Color], _: usize, _: usize) -> anyhow::Result<()> {
+        todo!("I have to figure out color implementations for console")
         // let mut stream = BufWriter::with_capacity(width * height, std::io::stdout());
         // for y in 0..height {
         //     for x in 0..width {
@@ -28,6 +26,6 @@ impl Output for Console {
     }
 
     fn process(&mut self, mut ray_tracer: crate::ray_tracer::RayTracer) -> anyhow::Result<()> {
-        Ok(ray_tracer.render(self)?)
+        ray_tracer.render(self)
     }
 }

@@ -26,7 +26,6 @@ impl Input for ObjectFile {
                 ignore_lines: true,
                 ignore_points: true,
                 single_index: true,
-                ..Default::default()
             },
         )?;
 
@@ -56,7 +55,7 @@ impl Input for ObjectFile {
                         get_point(&model.mesh.positions[i2 * 3..]),
                         get_point(&model.mesh.positions[i3 * 3..]),
                     );
-                    let triangle = if let Some(_) = model.mesh.normals.get(i1 * 3) {
+                    let triangle = if model.mesh.normals.get(i1 * 3).is_some() {
                         Triangle::with_normals(
                             point1,
                             get_normal(&model.mesh.normals[i1 * 3..]),

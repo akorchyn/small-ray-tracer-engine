@@ -46,6 +46,6 @@ impl Output for PPMImage {
     }
 
     fn process(&mut self, mut ray_tracer: crate::ray_tracer::RayTracer) -> anyhow::Result<()> {
-        Ok(ray_tracer.render(self)?)
+        ray_tracer.render(self)
     }
 }

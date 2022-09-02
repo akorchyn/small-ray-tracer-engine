@@ -1,18 +1,13 @@
-use std::cell::{Ref, RefCell};
-use std::io::Result;
 use std::path::PathBuf;
-use std::rc::Rc;
 
-use crate::ray_tracer::material::Material;
-
+use super::light::Light;
 use super::object::Object;
 use super::ObjectContainer;
 use crate::basic_geometry::ray::Ray;
 use crate::basic_geometry::{Intersect, Intersection};
 use crate::complex_structures::bvh::BVHTree;
 use crate::io::Input;
-
-use super::light::Light;
+use crate::ray_tracer::material::Material;
 
 pub(crate) struct LinearTracer {
     objects: Vec<Object>,
@@ -46,7 +41,7 @@ impl ObjectContainer for LinearTracer {
 
 pub(crate) enum Tracing {
     Linear,
-    BVH,
+    Bvh,
 }
 
 pub(crate) struct Scene {
@@ -70,7 +65,7 @@ impl Scene {
                 let (container, materials) = LinearTracer::from_obj_file(path)?;
                 (Box::new(container), materials)
             }
-            Tracing::BVH => {
+            Tracing::Bvh => {
                 let (container, materials) = BVHTree::from_obj_file(path)?;
                 (Box::new(container), materials)
             }
