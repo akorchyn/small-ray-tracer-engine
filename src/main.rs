@@ -1,4 +1,5 @@
 mod basic_geometry;
+mod basic_types;
 mod complex_structures;
 mod io;
 mod ray_tracer;
@@ -99,7 +100,7 @@ fn main() {
         Ok((mut objects, materials)) => {
             if sphere {
                 objects.push(Object::new(
-                    Rc::new(RefCell::new(Sphere::new(Point::new(20., 20., 20.0), 50.0))),
+                    Rc::new(RefCell::new(Sphere::new(Point::new(20., 20., 20.0), 5.0))),
                     materials.len() - 1,
                 ));
             }

@@ -1,16 +1,8 @@
-use std::{
-    cell::RefCell,
-    fs::File,
-    io::{BufRead, BufReader, Result},
-    path::PathBuf,
-    rc::Rc,
-};
-
-use tobj::{Material, Model};
+use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
 use crate::{
-    basic_geometry::{normal::Normal, point::Point, triangle::Triangle, vector::Vector},
-    ray_tracer::{object::Object, RayTracable},
+    basic_geometry::{normal::Normal, point::Point, triangle::Triangle},
+    ray_tracer::{material::Material, object::Object},
 };
 
 use super::Input;
@@ -38,15 +30,10 @@ impl Input for ObjectFile {
             },
         )?;
 
-        let mut materials = materials?;
+        let materials = materials?;
+        let mut materials: Vec<_> = materials.into_iter().map(Material::from).collect();
         let lambert_id = materials.len();
-        materials.push(Material {
-            ambient: [0.2, 0.2, 0.2],
-            diffuse: [0.8, 0.8, 0.8],
-            specular: [1.0, 1.0, 1.0],
-            shininess: 100.,
-            ..Default::default()
-        });
+        materials.push(Material::lambert());
 
         let data = models
             .into_iter()

@@ -1,34 +1,58 @@
 use std::{
     iter::Sum,
-    ops::{Add, Mul},
+    ops::{Add, Mul, Range},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use crate::basic_types::bounded::Bounded;
+
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct Color {
-    pub(crate) r: u8,
-    pub(crate) g: u8,
-    pub(crate) b: u8,
+    r: Bounded<f64>,
+    g: Bounded<f64>,
+    b: Bounded<f64>,
 }
 
 impl Color {
-    pub(crate) const fn new(r: u8, g: u8, b: u8) -> Self {
+    pub(crate) const fn bounded_new(r: Bounded<f64>, g: Bounded<f64>, b: Bounded<f64>) -> Self {
         Color { r, g, b }
     }
 
+    pub(crate) const fn new(r: f64, g: f64, b: f64) -> Self {
+        Color {
+            r: Bounded::new(r),
+            g: Bounded::new(g),
+            b: Bounded::new(b),
+        }
+    }
+
     pub(crate) fn black() -> Self {
-        Color::new(0, 0, 0)
+        Color::new(0., 0., 0.)
     }
 
     pub(crate) fn white() -> Self {
-        Color::new(255, 255, 255)
+        Color::new(1.0, 1.0, 1.0)
     }
 
     pub(crate) fn blue() -> Self {
-        Color::new(30, 144, 255)
+        Color::new(0., 0., 1.)
     }
 
     pub(crate) fn red() -> Self {
-        Color::new(254, 32, 32)
+        Color::new(1., 0., 0.)
+    }
+
+    pub(crate) fn rgb(&self) -> [u8; 3] {
+        [
+            (self.r.get_saturated(0., 1.) * 255.) as u8,
+            (self.g.get_saturated(0., 1.) * 255.) as u8,
+            (self.b.get_saturated(0., 1.) * 255.) as u8,
+        ]
+    }
+}
+
+impl From<[f32; 3]> for Color {
+    fn from([r, g, b]: [f32; 3]) -> Self {
+        Color::new(r.into(), g.into(), b.into())
     }
 }
 
@@ -36,11 +60,7 @@ impl Add for Color {
     type Output = Color;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Color::new(
-            self.r.wrapping_add(rhs.r),
-            self.g.wrapping_add(rhs.g),
-            self.b.wrapping_add(rhs.b),
-        )
+        Color::bounded_new(self.r + rhs.r, self.g + rhs.g, self.b + rhs.b)
     }
 }
 
@@ -48,23 +68,16 @@ impl Mul<f64> for Color {
     type Output = Color;
 
     fn mul(self, coof: f64) -> Self::Output {
-        Color::new(
-            ((self.r as f64) * coof) as u8,
-            ((self.g as f64) * coof) as u8,
-            ((self.b as f64) * coof) as u8,
-        )
+        let coof = Bounded::new(coof);
+        Color::bounded_new(self.r * coof, self.g * coof, self.b * coof)
     }
 }
 
-impl Mul<[f32; 3]> for Color {
+impl Mul for Color {
     type Output = Color;
 
-    fn mul(self, coof: [f32; 3]) -> Self::Output {
-        Color::new(
-            ((self.r as f64) * coof[0] as f64) as u8,
-            ((self.g as f64) * coof[1] as f64) as u8,
-            ((self.b as f64) * coof[2] as f64) as u8,
-        )
+    fn mul(self, coof: Color) -> Self::Output {
+        Color::bounded_new(self.r * coof.r, self.g * coof.g, self.b * coof.b)
     }
 }
 

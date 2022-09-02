@@ -1,11 +1,5 @@
-use std::cell::RefCell;
-use std::io::Result;
+use crate::ray_tracer::{color::Color, material::Material, object::Object, RayTracer};
 use std::path::PathBuf;
-use std::rc::Rc;
-
-use tobj::Material;
-
-use crate::ray_tracer::{color::Color, object::Object, RayTracable, RayTracer};
 
 pub(crate) mod console;
 pub(crate) mod obj_file;

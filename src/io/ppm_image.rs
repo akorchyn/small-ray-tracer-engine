@@ -38,7 +38,7 @@ impl Output for PPMImage {
             for x in 0..width {
                 let index = y * width + x;
                 let color = buff[index];
-                stream.write_all(&[color.r, color.g, color.b])?;
+                stream.write_all(&color.rgb())?;
             }
         }
 

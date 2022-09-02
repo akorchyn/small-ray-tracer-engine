@@ -28,7 +28,7 @@ impl Normal {
     pub(crate) fn reflect(normal: Normal, direction: Normal) -> Self {
         let normal = Vector::from(normal);
         let dir = Vector::from(direction);
-        (dir - normal * -2. * dir.dot(normal)).normalize()
+        (dir - normal * (2. * dir.dot(normal))).normalize()
     }
 }
 

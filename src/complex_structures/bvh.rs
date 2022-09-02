@@ -1,11 +1,4 @@
-use std::{
-    cell::{Ref, RefCell},
-    collections::VecDeque,
-    path::PathBuf,
-    rc::Rc,
-};
-
-use tobj::Material;
+use std::{collections::VecDeque, path::PathBuf};
 
 use crate::{
     basic_geometry::{
@@ -13,7 +6,7 @@ use crate::{
     },
     complex_structures::BoundingBox,
     io::Input,
-    ray_tracer::{object::Object, ObjectContainer, RayTracable},
+    ray_tracer::{material::Material, object::Object, ObjectContainer},
 };
 
 struct BVHNode {

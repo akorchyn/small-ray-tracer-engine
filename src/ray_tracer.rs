@@ -1,14 +1,15 @@
 pub(crate) mod camera;
 pub(crate) mod color;
 pub(crate) mod light;
+pub(crate) mod material;
 pub(crate) mod object;
 pub(crate) mod scene;
 pub(crate) mod texture_loader;
 pub(crate) mod viewframe;
 
 use camera::Camera;
+use material::Material;
 use scene::Scene;
-use tobj::Material;
 
 use crate::basic_geometry::normal::Normal;
 use crate::basic_geometry::point::Point;
@@ -30,7 +31,7 @@ use self::texture_loader::TextureLoader;
 
 const MIRROR_RECURSION_LIMIT: u32 = 4;
 
-const DEFAULT_BACKGROUND_COLOR: Color = Color::new(45, 100, 0);
+const DEFAULT_BACKGROUND_COLOR: Color = Color::new(0.18, 0.39, 0.);
 
 pub(crate) trait RayTracable: Intersect + NormalAtPoint + Transform + BoundingBox {}
 
@@ -107,45 +108,20 @@ impl RayTracer {
             .lights()
             .iter()
             .map(|light| match *light {
-                Light::Environment(color, coof) => (color * coof) * material.ambient,
+                Light::Environment(color, coof) => color * coof * material.ambient,
                 Light::Point(point, color, coof)
                     if !self.is_shadowed(
                         intersection_point,
                         (point - intersection_point).normalize(),
                     ) =>
                 {
-                    let light_dir = (point - intersection_point).normalize();
-                    let diffuse = color
-                        * (point - intersection_point)
-                            .normalize()
-                            .dot(normal)
-                            .max(0.0)
-                        * material.diffuse;
-
-                    let reflection_light = Normal::reflect(-light_dir, normal);
-                    let specular = color
-                        * coof
-                        * reflection_light
-                            .dot(-ray.direction)
-                            .max(0.)
-                            .powf(material.shininess.into());
-
-                    (specular + diffuse) * coof
+                    let light_dir = (intersection_point - point).normalize(); // In direction from Light to Intersection
+                    RayTracer::phong_color(color * coof, light_dir, normal, &ray, &material)
                 }
                 Light::Directed(light_dir, color, coof)
                     if !self.is_shadowed(intersection_point, -light_dir) =>
                 {
-                    let diffuse =
-                        color * coof * (-light_dir).dot(normal).max(0.0) * material.diffuse;
-                    let reflection_light = Normal::reflect(light_dir, normal);
-                    let specular = color
-                        * coof
-                        * reflection_light
-                            .dot(-ray.direction)
-                            .max(0.)
-                            .powf(material.shininess.into());
-
-                    (specular + diffuse) * coof
+                    RayTracer::phong_color(color * coof, light_dir, normal, &ray, &material)
                 }
                 _ => Color::black(),
             })
@@ -156,5 +132,25 @@ impl RayTracer {
         let ray = Ray::new(intersection_point, dir_to_light);
         let ray = Ray::new(ray.at(1e-4), dir_to_light);
         self.scene.objects().trace(&ray).is_some()
+    }
+
+    fn phong_color(
+        intensity: Color,
+        light_dir: Normal,
+        normal: Normal,
+        ray: &Ray,
+        material: &Material,
+    ) -> Color {
+        let diffuse = intensity * normal.dot(-light_dir).max(0.0) * material.diffuse;
+
+        let reflection_light = Normal::reflect(normal, light_dir);
+        let specular = intensity
+            * reflection_light
+                .dot(-ray.direction)
+                .abs()
+                .powf(material.shininess.into())
+            * material.specular;
+
+        diffuse + specular
     }
 }

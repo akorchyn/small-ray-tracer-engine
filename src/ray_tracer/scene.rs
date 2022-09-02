@@ -3,7 +3,7 @@ use std::io::Result;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use tobj::Material;
+use crate::ray_tracer::material::Material;
 
 use super::object::Object;
 use super::ObjectContainer;

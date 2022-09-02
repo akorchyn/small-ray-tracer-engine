@@ -91,7 +91,8 @@ impl Output for Window {
     fn dump(&mut self, buff: &[Color], width: usize, height: usize) -> anyhow::Result<()> {
         let buff = buff
             .iter()
-            .map(|&Color { r, g, b }| (r as u32) << 16 | (g as u32) << 8 | b as u32)
+            .map(|color| color.rgb())
+            .map(|[r, g, b]| (r as u32) << 16 | (g as u32) << 8 | b as u32)
             .collect::<Vec<_>>();
         self.window
             .update_with_buffer(&buff, width, height)
