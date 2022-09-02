@@ -5,6 +5,9 @@ pub(crate) struct Material {
     pub(crate) diffuse: Color,
     pub(crate) specular: Color,
     pub(crate) shininess: f64,
+    pub(crate) illumination: u8,
+    pub(crate) optical_density: f64,
+    pub(crate) dissolve: f64,
 }
 
 impl Material {
@@ -14,6 +17,9 @@ impl Material {
             diffuse: [0.8, 0.8, 0.8].into(),
             specular: [0.4, 0.4, 0.4].into(),
             shininess: 10.,
+            illumination: 1,
+            optical_density: 1.0,
+            dissolve: 1.0,
         }
     }
 }
@@ -25,6 +31,9 @@ impl From<tobj::Material> for Material {
             diffuse: mat.diffuse.into(),
             specular: mat.specular.into(),
             shininess: mat.shininess.into(),
+            illumination: mat.illumination_model.unwrap_or(2),
+            optical_density: mat.optical_density.into(),
+            dissolve: mat.dissolve.into(),
         }
     }
 }

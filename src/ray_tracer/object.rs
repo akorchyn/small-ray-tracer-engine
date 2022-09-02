@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    basic_geometry::{Intersect, NormalAtPoint},
+    basic_geometry::{Intersect, NormalAtPoint, Transform},
     complex_structures::BoundingBox,
 };
 
@@ -44,5 +44,11 @@ impl NormalAtPoint for Object {
 impl BoundingBox for Object {
     fn bounding_box(&self) -> crate::basic_geometry::alighned_box::AlighnedBox {
         self.geometry.borrow().bounding_box()
+    }
+}
+
+impl Transform for Object {
+    fn transform(&mut self, tranform: crate::basic_geometry::Transformation) {
+        self.geometry.borrow_mut().transform(tranform)
     }
 }

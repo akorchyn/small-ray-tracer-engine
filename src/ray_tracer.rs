@@ -90,8 +90,16 @@ impl RayTracer {
             let intersection_point = ray.at(intersection.distance());
             let normal = object.normal_at_point(&intersection_point, intersection);
             let material = self.scene.materials(object.material_id).clone();
-            let color = self.get_color(intersection_point, normal, &material, ray);
-            color
+            let color = self.get_color(intersection_point, normal, &material, &ray);
+
+            if material.dissolve < 1.0 {
+                let ray = Ray::new(ray.at(intersection.distance() + 1e-4), ray.direction);
+                // We have to trace another object behind this one.
+                self.get_color_for_ray(ray, 0) * (1. - material.dissolve)
+                    + color * material.dissolve
+            } else {
+                color
+            }
         } else {
             DEFAULT_BACKGROUND_COLOR
         }
@@ -102,7 +110,7 @@ impl RayTracer {
         intersection_point: Point,
         normal: Normal,
         material: &Material,
-        ray: Ray,
+        ray: &Ray,
     ) -> Color {
         self.scene
             .lights()
@@ -141,16 +149,22 @@ impl RayTracer {
         ray: &Ray,
         material: &Material,
     ) -> Color {
-        let diffuse = intensity * normal.dot(-light_dir).max(0.0) * material.diffuse;
-
-        let reflection_light = Normal::reflect(normal, light_dir);
-        let specular = intensity
-            * reflection_light
-                .dot(-ray.direction)
-                .abs()
-                .powf(material.shininess.into())
-            * material.specular;
-
-        diffuse + specular
+        if material.illumination >= 1 {
+            let diffuse = intensity * normal.dot(-light_dir).max(0.0) * material.diffuse;
+            let specular = if material.illumination == 2 {
+                let reflection_light = Normal::reflect(normal, light_dir);
+                intensity
+                    * reflection_light
+                        .dot(-ray.direction)
+                        .abs()
+                        .powf(material.shininess.into())
+                    * material.specular
+            } else {
+                Color::black()
+            };
+            diffuse + specular
+        } else {
+            intensity * material.diffuse
+        }
     }
 }
