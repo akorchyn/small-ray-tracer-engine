@@ -1,11 +1,11 @@
 use std::{
     iter::Sum,
-    ops::{Add, Mul, Range},
+    ops::{Add, Mul, Sub},
 };
 
 use crate::basic_types::bounded::Bounded;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub(crate) struct Color {
     r: Bounded<f64>,
     g: Bounded<f64>,
@@ -25,19 +25,19 @@ impl Color {
         }
     }
 
-    pub(crate) fn black() -> Self {
+    pub(crate) const fn black() -> Self {
         Color::new(0., 0., 0.)
     }
 
-    pub(crate) fn white() -> Self {
+    pub(crate) const fn white() -> Self {
         Color::new(1.0, 1.0, 1.0)
     }
 
-    pub(crate) fn blue() -> Self {
+    pub(crate) const fn blue() -> Self {
         Color::new(0., 0., 1.)
     }
 
-    pub(crate) fn red() -> Self {
+    pub(crate) const fn red() -> Self {
         Color::new(1., 0., 0.)
     }
 
@@ -78,6 +78,14 @@ impl Mul for Color {
 
     fn mul(self, coof: Color) -> Self::Output {
         Color::bounded_new(self.r * coof.r, self.g * coof.g, self.b * coof.b)
+    }
+}
+
+impl Sub for Color {
+    type Output = Color;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Color::bounded_new(self.r - rhs.r, self.g - rhs.g, self.b - rhs.b)
     }
 }
 

@@ -15,9 +15,21 @@ impl Material {
         Material {
             ambient: [0.2, 0.2, 0.2].into(),
             diffuse: [0.8, 0.8, 0.8].into(),
-            specular: [0.4, 0.4, 0.4].into(),
+            specular: [0.0, 0.0, 0.0].into(),
             shininess: 10.,
             illumination: 1,
+            optical_density: 1.0,
+            dissolve: 1.0,
+        }
+    }
+
+    pub(crate) fn reflective() -> Self {
+        Material {
+            ambient: [0.2, 0.2, 0.2].into(),
+            diffuse: [0.8, 0.8, 0.8].into(),
+            specular: [0.5, 0.5, 0.5].into(),
+            shininess: 10.,
+            illumination: 2,
             optical_density: 1.0,
             dissolve: 1.0,
         }

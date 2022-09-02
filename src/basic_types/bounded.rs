@@ -1,11 +1,11 @@
-use std::ops::{Add, Mul, Range};
+use std::ops::{Add, Mul, Sub};
 
-#[derive(Copy, Clone, Debug)]
-pub(crate) struct Bounded<T: PartialOrd + Copy> {
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+pub(crate) struct Bounded<T: PartialOrd + Copy + PartialEq> {
     val: T,
 }
 
-impl<T: PartialOrd + Copy> Bounded<T> {
+impl<T: PartialOrd + Copy + PartialOrd + PartialEq> Bounded<T> {
     pub(crate) const fn new(val: T) -> Self {
         Bounded { val }
     }
@@ -25,7 +25,7 @@ impl<T: PartialOrd + Copy> Bounded<T> {
     }
 }
 
-impl<T: Add<Output = T> + PartialOrd + Copy> Add for Bounded<T> {
+impl<T: Add<Output = T> + PartialOrd + Copy + PartialEq> Add for Bounded<T> {
     type Output = Bounded<T>;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -33,10 +33,18 @@ impl<T: Add<Output = T> + PartialOrd + Copy> Add for Bounded<T> {
     }
 }
 
-impl<T: Mul<Output = T> + PartialOrd + Copy> Mul for Bounded<T> {
+impl<T: Mul<Output = T> + PartialOrd + Copy + PartialEq> Mul for Bounded<T> {
     type Output = Bounded<T>;
 
     fn mul(self, rhs: Self) -> Self::Output {
         Bounded::<T>::new(self.val * rhs.val)
+    }
+}
+
+impl<T: Sub<Output = T> + PartialOrd + Copy + PartialEq> Sub for Bounded<T> {
+    type Output = Bounded<T>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Bounded::<T>::new(self.val - rhs.val)
     }
 }

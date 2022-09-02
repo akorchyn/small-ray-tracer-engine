@@ -9,15 +9,15 @@ use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use basic_geometry::alighned_box::AlighnedBox;
 use basic_geometry::normal::Normal;
-use basic_geometry::plane::Plane;
 use basic_geometry::point::Point;
 use basic_geometry::sphere::Sphere;
+use basic_geometry::{Axis, Transform};
 use io::Input;
 use ray_tracer::camera::Camera;
 use ray_tracer::color::Color;
 use ray_tracer::light::Light;
+use ray_tracer::material::Material;
 use ray_tracer::object::Object;
 use ray_tracer::scene::{Scene, Tracing};
 use ray_tracer::viewframe::ViewFrame;
@@ -97,20 +97,25 @@ fn main() {
             println!("Failed to process object file:\n{}", e);
             std::process::exit(1);
         }
-        Ok((mut objects, materials)) => {
+        Ok((mut objects, mut materials)) => {
+            materials.push(Material::reflective());
             if sphere {
                 objects.push(Object::new(
                     Rc::new(RefCell::new(Sphere::new(Point::new(20., 20., 20.0), 5.0))),
                     materials.len() - 1,
                 ));
             }
+            // objects.iter_mut().for_each(|elem| {
+            //     elem.transform(basic_geometry::Transformation::Rotation(Axis::Y, 180.))w
+            // });
+
             let tracer: Box<dyn ObjectContainer> = match tracing {
                 Tracing::BVH => Box::new(complex_structures::bvh::BVHTree::new(objects, 1)),
                 Tracing::Linear => Box::new(ray_tracer::scene::LinearTracer::new(objects)),
             };
             let mut scene = Scene::new(tracer, materials);
             scene.add_light(Light::Point(
-                Point::new(0.0, 100.0, 100.0),
+                Point::new(0.0, 400.0, 200.0),
                 Color::white(),
                 0.7,
             ));

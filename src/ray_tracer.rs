@@ -91,17 +91,28 @@ impl RayTracer {
             let normal = object.normal_at_point(&intersection_point, intersection);
             let material = self.scene.materials(object.material_id).clone();
             let color = self.get_color(intersection_point, normal, &material, &ray);
-
-            if material.dissolve < 1.0 {
+            let color = if material.dissolve < 1.0 {
                 let ray = Ray::new(ray.at(intersection.distance() + 1e-4), ray.direction);
                 // We have to trace another object behind this one.
                 self.get_color_for_ray(ray, 0) * (1. - material.dissolve)
                     + color * material.dissolve
             } else {
                 color
+            };
+
+            if material.specular > Color::black() && nonce < MIRROR_RECURSION_LIMIT {
+                let ray = ray.reflect_from_normal(intersection_point, normal);
+                color * (Color::white() - material.specular)
+                    + material.specular * self.get_color_for_ray(ray, nonce + 1)
+            } else {
+                color
             }
         } else {
-            DEFAULT_BACKGROUND_COLOR
+            if nonce > 0 {
+                Color::black()
+            } else {
+                DEFAULT_BACKGROUND_COLOR
+            }
         }
     }
 
